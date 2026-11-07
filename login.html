@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login | Trend Wave</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: Arial, sans-serif;
+  background: #07172f;
+  color: #fff;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+.container {
+  background: #102b4c;
+  border: 1px solid #294361;
+  width: 100%;
+  max-width: 410px;
+  padding: 30px;
+  border-radius: 15px;
+}
+
+.logo {
+  color: #f5c76b;
+  text-align: center;
+  font-size: 25px;
+  font-weight: bold;
+  margin-bottom: 25px;
+}
+
+h2 { text-align: center; margin-bottom: 10px; }
+
+.subtitle {
+  text-align: center;
+  color: #b8c5d8;
+  font-size: 13px;
+  margin-bottom: 25px;
+}
+
+label { display: block; margin-bottom: 8px; font-size: 14px; }
+
+input {
+  width: 100%;
+  padding: 14px;
+  background: #07172f;
+  border: 1px solid #34516f;
+  border-radius: 7px;
+  color: #fff;
+  font-size: 15px;
+  margin-bottom: 18px;
+  outline: none;
+}
+input:focus { border-color: #f5c76b; }
+
+.pw-wrap { position: relative; }
+.pw-wrap input { padding-right: 62px; }
+.toggle-pw {
+  position: absolute;
+  right: 6px;
+  top: 6px;
+  width: auto;
+  padding: 8px 10px;
+  background: transparent;
+  color: #f5c76b;
+  font-size: 13px;
+  font-weight: normal;
+}
+
+button {
+  width: 100%;
+  padding: 15px;
+  background: #f5c76b;
+  color: #07172f;
+  border: none;
+  border-radius: 7px;
+  font-weight: bold;
+  font-size: 15px;
+  cursor: pointer;
+}
+button:disabled { opacity: 0.6; cursor: not-allowed; }
+button:focus-visible, a:focus-visible, input:focus-visible {
+  outline: 2px solid #f5c76b;
+  outline-offset: 2px;
+}
+
+.forgot {
+  display: block;
+  text-align: right;
+  font-size: 13px;
+  margin: -8px 0 18px;
+}
+
+#message {
+  margin-top: 15px;
+  text-align: center;
+  font-size: 13px;
+  line-height: 1.5;
+  min-height: 20px;
+}
+
+.register {
+  text-align: center;
+  color: #b8c5d8;
+  font-size: 14px;
+  margin-top: 22px;
+}
+
+a { color: #f5c76b; text-decoration: none; }
+
+.back {
+  display: block;
+  text-align: center;
+  margin-top: 20px;
+  color: #b8c5d8;
+  font-size: 13px;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="logo">ᴛʀᴇɴᴅ ᴡᴀᴠᴇ 〆</div>
+
+  <h2>Welcome Back</h2>
+  <p class="subtitle">Login to your account and continue your journey.</p>
+
+  <form id="loginForm" novalidate>
+    <label for="email">Email Address</label>
+    <input type="email" id="email" placeholder="Enter your email" autocomplete="email" required>
+
+    <label for="password">Password</label>
+    <div class="pw-wrap">
+      <input type="password" id="password" placeholder="Enter your password" autocomplete="current-password" required>
+      <button type="button" class="toggle-pw" id="togglePw">Show</button>
+    </div>
+
+    <a href="#" class="forgot" id="forgotLink">Forgot password?</a>
+
+    <button type="submit" id="loginBtn">Login →</button>
+
+    <div id="message" role="status" aria-live="polite"></div>
+  </form>
+
+  <p class="register">
+    Don't have an account?
+    <a href="register.html">Create Account</a>
+  </p>
+
+  <a href="index.html" class="back">← Back to Homepage</a>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyB3iNjyk71CM0w0TwsI0T4EKlgku4oaUOE",
+  authDomain: "trend-wave-d5a7b.firebaseapp.com",
+  projectId: "trend-wave-d5a7b",
+  storageBucket: "trend-wave-d5a7b.firebasestorage.app",
+  messagingSenderId: "403305458793",
+  appId: "1:403305458793:web:9df8a535500c403ed0c6f8",
+  measurementId: "G-1ZX8YNF81Y"
+};
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+const USER_PAGE = "dashboard.html";
+
+const $ = (id) => document.getElementById(id);
+const form = $("loginForm");
+const message = $("message");
+const button = $("loginBtn");
+
+const ERRORS = {
+  "auth/user-not-found": "Account not found. Please register.",
+  "auth/wrong-password": "Incorrect password.",
+  "auth/invalid-credential": "Incorrect email or password.",
+  "auth/invalid-email": "Please enter a valid email.",
+  "auth/missing-password": "Please enter your password.",
+  "auth/too-many-requests": "Too many attempts. Try again later.",
+  "auth/network-request-failed": "Check your internet connection.",
+  "auth/user-disabled": "This account has been disabled.",
+  "auth/operation-not-allowed": "Email/Password sign-in is not enabled in Firebase.",
+  "auth/api-key-not-valid.-please-pass-a-valid-api-key.": "Invalid Firebase API key. Check firebaseConfig."
+};
+
+function setMessage(text, ok) {
+  message.style.color = ok ? "#70e6a0" : "#ff7777";
+  message.textContent = text;
+}
+
+async function getDestination(uid) {
+  return USER_PAGE;
+}
+
+/* Login */
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const email = $("email").value.trim();
+  const password = $("password").value;
+
+  if (!email || !password) {
+    return setMessage("Enter your email and password.", false);
+  }
+
+  button.disabled = true;
+  button.textContent = "Logging in...";
+  message.textContent = "";
+
+  try {
+    await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+    const cred = await auth.signInWithEmailAndPassword(email, password);
+    const destination = await getDestination(cred.user.uid);
+
+    setMessage("Login successful! Redirecting...", true);
+    setTimeout(() => location.replace(destination), 600);
+  } catch (error) {
+    console.error(error);
+    setMessage(ERRORS[error.code] || error.message, false);
+    button.disabled = false;
+    button.textContent = "Login →";
+  }
+});
+
+/* Show / hide password */
+$("togglePw").addEventListener("click", () => {
+  const input = $("password");
+  const show = input.type === "password";
+  input.type = show ? "text" : "password";
+  $("togglePw").textContent = show ? "Hide" : "Show";
+});
+
+/* Forgot password */
+$("forgotLink").addEventListener("click", async (e) => {
+  e.preventDefault();
+  const email = $("email").value.trim();
+  if (!email) return setMessage("Enter your email above first, then tap Forgot password.", false);
+
+  try {
+    await auth.sendPasswordResetEmail(email);
+    setMessage("Reset link sent. Check your inbox and spam folder.", true);
+  } catch (error) {
+    setMessage(ERRORS[error.code] || error.message, false);
+  }
+});
+</script>
+</body>
+</html>

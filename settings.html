@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Settings | Trend Wave</title>
+<style>
+:root{--bg:#07172f;--card:#102b4c;--card-border:#234467;--gold:#f5c76b;--muted:#aab6ca;--danger:#ff6b6b;--ok:#70e6a0}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:Arial,sans-serif;background:var(--bg);color:#fff;min-height:100vh}
+
+header{background:var(--card);padding:16px 20px;border-bottom:1px solid var(--gold);display:flex;align-items:center;gap:14px}
+.back{width:40px;height:40px;border-radius:50%;background:var(--bg);border:1px solid var(--card-border);color:#fff;font-size:20px;cursor:pointer;flex-shrink:0}
+header h2{color:var(--gold);font-size:18px}
+header p{color:#bbb;margin-top:3px;font-size:12px}
+
+.container{padding:20px;max-width:600px;margin:auto;padding-bottom:calc(40px + env(safe-area-inset-bottom))}
+.page-sub{color:var(--muted);font-size:14px;line-height:1.5;margin-bottom:22px}
+
+.group{background:var(--card);border:1px solid var(--card-border);border-radius:14px;padding:18px;margin-bottom:18px}
+.group h3{color:var(--gold);font-size:16px;margin-bottom:4px}
+.group .hint{color:var(--muted);font-size:12px;line-height:1.5;margin-bottom:16px}
+
+.field{margin-bottom:16px}
+.field:last-child{margin-bottom:0}
+.field label{display:block;font-size:14px;margin-bottom:8px}
+.field small{display:block;color:var(--muted);font-size:12px;margin-top:6px;line-height:1.4}
+.field input{width:100%;padding:14px;background:var(--bg);border:1px solid #34516f;border-radius:8px;color:#fff;font-family:inherit;font-size:15px;outline:none}
+.field input:focus{border-color:var(--gold)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+.btn{width:100%;padding:15px;background:var(--gold);color:var(--bg);border:none;border-radius:8px;font-weight:bold;font-size:15px;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--muted);border:1px solid var(--card-border);margin-top:10px}
+.btn:disabled{opacity:.6;cursor:not-allowed}
+button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+
+.msg{margin-top:14px;text-align:center;font-size:13px;line-height:1.5;min-height:20px}
+.updated{text-align:center;color:var(--muted);font-size:12px;margin-top:6px}
+.note{color:var(--muted);font-size:12px;line-height:1.6;margin-top:18px;text-align:center}
+
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translate(-50%,20px);background:var(--card);border:1px solid var(--gold);color:#fff;padding:12px 20px;border-radius:8px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;z-index:110;max-width:90%;text-align:center}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+#loader{position:fixed;inset:0;background:radial-gradient(circle at 50% 40%,#12305a 0%,var(--bg) 65%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:30px;z-index:200;padding:24px;transition:opacity .5s ease,visibility .5s ease}
+#loader.hide{opacity:0;visibility:hidden}
+.loader-ring{position:relative;width:110px;height:110px;display:flex;align-items:center;justify-content:center}
+.loader-ring::before,.loader-ring::after{content:"";position:absolute;inset:0;border-radius:50%;border:2px solid transparent}
+.loader-ring::before{border-top-color:var(--gold);border-right-color:var(--gold);animation:spin 1.1s linear infinite}
+.loader-ring::after{inset:10px;border-bottom-color:rgba(245,199,107,.5);border-left-color:rgba(245,199,107,.5);animation:spin 1.8s linear infinite reverse}
+.loader-mark{color:var(--gold);font-size:38px;font-weight:bold;animation:pulse 1.6s ease-in-out infinite}
+.loader-brand{text-align:center}
+.loader-brand h1{font-size:20px;letter-spacing:4px;background:linear-gradient(90deg,#b88a1a,#f5c76b,#fff2c4,#f5c76b,#b88a1a);background-size:200% auto;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:shine 2.2s linear infinite;margin-bottom:8px}
+.loader-brand p{color:var(--muted);font-size:12px;letter-spacing:1px}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(.88);opacity:.7}}
+@keyframes shine{to{background-position:200% center}}
+#denied{display:none;text-align:center;max-width:420px}
+#denied h3{color:var(--gold);font-size:20px}
+#denied p{color:#bbb;font-size:13px;margin-top:10px;line-height:1.5}
+#denied button{max-width:260px;margin:20px auto 0;display:block;background:var(--card);border:1px solid var(--gold);color:var(--gold);padding:15px;border-radius:8px;font-size:15px;width:100%;cursor:pointer}
+#loader.denied .loader-ring,#loader.denied .loader-brand{display:none}
+#loader.denied #denied{display:block}
+#app{visibility:hidden}
+</style>
+</head>
+<body>
+
+<div id="loader">
+  <div class="loader-ring"><div class="loader-mark">〆</div></div>
+  <div class="loader-brand">
+    <h1>TREND WAVE</h1>
+    <p>Preparing your dashboard...</p>
+  </div>
+  <div id="denied">
+    <h3 id="deniedTitle"></h3>
+    <p id="deniedText"></p>
+    <button type="button" id="deniedBtn">Go to login</button>
+  </div>
+</div>
+
+<div id="app">
+  <header>
+    <button class="back" id="backBtn" aria-label="Back">‹</button>
+    <div>
+      <h2>Settings</h2>
+      <p>Administrator Panel</p>
+    </div>
+  </header>
+
+  <div class="container">
+    <p class="page-sub">Change how the app works without editing any code. Saved changes reach every user straight away.</p>
+
+    <form id="form" novalidate>
+
+      <div class="group">
+        <h3>Withdrawals</h3>
+        <p class="hint">The smallest and largest amount a user can request in one withdrawal.</p>
+        <div class="row2">
+          <div class="field">
+            <label for="minW">Minimum (₦)</label>
+            <input type="number" id="minW" min="1" step="any" inputmode="decimal">
+          </div>
+          <div class="field">
+            <label for="maxW">Maximum (₦)</label>
+            <input type="number" id="maxW" min="1" step="any" inputmode="decimal">
+          </div>
+        </div>
+      </div>
+
+      <div class="group">
+        <h3>Referrals</h3>
+        <p class="hint">What a user earns when someone joins with their link and completes enough tasks.</p>
+        <div class="row2">
+          <div class="field">
+            <label for="bonus">Bonus (₦)</label>
+            <input type="number" id="bonus" min="0" step="any" inputmode="decimal">
+          </div>
+          <div class="field">
+            <label for="tasksNeeded">Tasks needed</label>
+            <input type="number" id="tasksNeeded" min="1" step="1" inputmode="numeric">
+          </div>
+        </div>
+        <div class="field" style="margin-top:12px">
+          <small>Friends who already joined keep counting. If you raise the number, they need to reach the new total before the bonus is paid.</small>
+        </div>
+      </div>
+
+      <div class="group">
+        <h3>Community</h3>
+        <p class="hint">The Telegram link behind the "Join Our Community" banner on the dashboard.</p>
+        <div class="field">
+          <label for="telegram">Telegram link</label>
+          <input type="url" id="telegram" placeholder="https://t.me/yourchannel">
+          <small>Leave empty to keep the default link.</small>
+        </div>
+      </div>
+
+      <button type="submit" class="btn" id="saveBtn">Save settings</button>
+      <button type="button" class="btn ghost" id="resetBtn">Reset form to defaults</button>
+      <div class="msg" id="msg" role="status" aria-live="polite"></div>
+      <div class="updated" id="updated"></div>
+    </form>
+
+    <p class="note">
+      The text on your homepage (index.html) is not changed automatically. Update the withdrawal and referral amounts there by hand if you change them here.
+    </p>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, doc, onSnapshot, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyB3iNjyk71CM0w0TwsI0T4EKlgku4oaUOE",
+  authDomain: "trend-wave-d5a7b.firebaseapp.com",
+  projectId: "trend-wave-d5a7b",
+  storageBucket: "trend-wave-d5a7b.firebasestorage.app",
+  messagingSenderId: "403305458793",
+  appId: "1:403305458793:web:9df8a535500c403ed0c6f8",
+  measurementId: "G-1ZX8YNF81Y"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const ADMIN_UID = "DEKlRtipYTMIaBNkSzMtrGNNFXr2";
+const $ = (id) => document.getElementById(id);
+
+const DEFAULTS = { minWithdraw: 1000, maxWithdraw: 5000, referralBonus: 100, referralTasks: 5, telegramLink: "" };
+
+let unsubscribe = null;
+let loadedOnce = false;
+let dirty = false;
+
+let toastTimer;
+function showToast(text) {
+  const t = $("toast");
+  t.textContent = text;
+  t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("show"), 2400);
+}
+
+function setMsg(text, ok) {
+  const m = $("msg");
+  m.style.color = ok ? "#70e6a0" : "#ff7777";
+  m.textContent = text;
+}
+
+/* ---------- Access control ---------- */
+function denyAccess(title, detail) {
+  $("deniedTitle").textContent = title;
+  $("deniedText").textContent = detail;
+  $("loader").classList.add("denied");
+}
+$("deniedBtn").addEventListener("click", async () => {
+  try { await signOut(auth); } finally { location.replace("login.html"); }
+});
+$("backBtn").addEventListener("click", () => { location.href = "admin-dashboard.html"; });
+
+onAuthStateChanged(auth, (user) => {
+  if (!user) return denyAccess("Not signed in", "Log in from the same site this page is hosted on.");
+  if (user.uid !== ADMIN_UID) return denyAccess("Not an admin", "This account isn't authorised to change settings.");
+  $("app").style.visibility = "visible";
+  listen();
+  setTimeout(() => $("loader").classList.add("hide"), 900);
+});
+
+/* ---------- Load ---------- */
+function fillForm(s) {
+  $("minW").value = s.minWithdraw;
+  $("maxW").value = s.maxWithdraw;
+  $("bonus").value = s.referralBonus;
+  $("tasksNeeded").value = s.referralTasks;
+  $("telegram").value = s.telegramLink || "";
+}
+
+function listen() {
+  if (unsubscribe) unsubscribe();
+
+  unsubscribe = onSnapshot(
+    doc(db, "settings", "app"),
+    (snap) => {
+      const data = snap.exists() ? snap.data() : {};
+      const merged = {
+        minWithdraw: Number(data.minWithdraw) || DEFAULTS.minWithdraw,
+        maxWithdraw: Number(data.maxWithdraw) || DEFAULTS.maxWithdraw,
+        referralBonus: data.referralBonus === 0 ? 0 : (Number(data.referralBonus) || DEFAULTS.referralBonus),
+        referralTasks: Number(data.referralTasks) || DEFAULTS.referralTasks,
+        telegramLink: data.telegramLink || ""
+      };
+
+      // Don't overwrite what the admin is typing
+      if (!loadedOnce || !dirty) fillForm(merged);
+      loadedOnce = true;
+
+      if (data.updatedAt && data.updatedAt.toDate) {
+        $("updated").textContent = "Last saved " + data.updatedAt.toDate().toLocaleString("en-NG", { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" });
+      } else {
+        $("updated").textContent = snap.exists() ? "" : "Using default values. Nothing saved yet.";
+      }
+    },
+    (err) => { console.error(err); setMsg("Couldn't load settings: " + (err.code || "error"), false); }
+  );
+}
+
+document.querySelectorAll("#form input").forEach((i) => {
+  i.addEventListener("input", () => { dirty = true; });
+});
+
+$("resetBtn").addEventListener("click", () => {
+  fillForm(DEFAULTS);
+  dirty = true;
+  setMsg("Defaults filled in. Tap Save to apply them.", true);
+});
+
+/* ---------- Save ---------- */
+$("form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const minWithdraw = parseFloat($("minW").value);
+  const maxWithdraw = parseFloat($("maxW").value);
+  const referralBonus = parseFloat($("bonus").value);
+  const referralTasks = parseInt($("tasksNeeded").value, 10);
+  const telegramLink = $("telegram").value.trim();
+
+  if (!(minWithdraw > 0)) return setMsg("Minimum withdrawal must be more than 0.", false);
+  if (!(maxWithdraw >= minWithdraw)) return setMsg("Maximum can't be lower than the minimum.", false);
+  if (!(referralBonus >= 0)) return setMsg("Enter the referral bonus (0 or more).", false);
+  if (!(referralTasks >= 1)) return setMsg("Tasks needed must be at least 1.", false);
+  if (telegramLink && !/^https?:\/\/.+/i.test(telegramLink)) return setMsg("The Telegram link must start with https://", false);
+
+  const btn = $("saveBtn");
+  btn.disabled = true;
+  btn.textContent = "Saving...";
+  setMsg("", true);
+
+  try {
+    await setDoc(doc(db, "settings", "app"), {
+      minWithdraw,
+      maxWithdraw,
+      referralBonus,
+      referralTasks,
+      telegramLink,
+      updatedAt: serverTimestamp()
+    }, { merge: true });
+
+    dirty = false;
+    setMsg("Settings saved.", true);
+    showToast("Settings saved");
+  } catch (err) {
+    console.error(err);
+    setMsg("Couldn't save: " + (err.code || err.message), false);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Save settings";
+  }
+});
+</script>
+</body>
+</html>

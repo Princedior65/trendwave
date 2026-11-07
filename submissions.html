@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Task Submissions | Trend Wave</title>
+<style>
+:root{--bg:#07172f;--card:#102b4c;--card-border:#234467;--gold:#f5c76b;--muted:#aab6ca;--danger:#ff6b6b;--ok:#70e6a0}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:Arial,sans-serif;background:var(--bg);color:#fff;min-height:100vh}
+
+header{background:var(--card);padding:16px 20px;border-bottom:1px solid var(--gold);display:flex;align-items:center;gap:14px}
+.back{width:40px;height:40px;border-radius:50%;background:var(--bg);border:1px solid var(--card-border);color:#fff;font-size:20px;cursor:pointer;flex-shrink:0}
+header h2{color:var(--gold);font-size:18px}
+header p{color:#bbb;margin-top:3px;font-size:12px}
+
+.container{padding:20px;max-width:700px;margin:auto;padding-bottom:calc(40px + env(safe-area-inset-bottom))}
+
+.filters{display:flex;gap:8px;margin-bottom:18px}
+.filters button{flex:1;padding:10px 4px;background:var(--card);border:1px solid var(--card-border);color:var(--muted);border-radius:20px;font-size:13px;cursor:pointer}
+.filters button.active{background:var(--gold);color:var(--bg);border-color:var(--gold);font-weight:bold}
+
+.sub{background:var(--card);border:1px solid var(--card-border);border-radius:14px;padding:16px;margin-bottom:12px}
+.sub-top{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.av{width:42px;height:42px;border-radius:50%;background:var(--gold);color:var(--bg);font-weight:bold;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.who{flex:1;min-width:0}
+.who b{display:block;font-size:15px;word-break:break-word}
+.who small{color:var(--muted);font-size:12px;word-break:break-all}
+.reward{color:var(--gold);font-weight:bold;font-size:15px;white-space:nowrap}
+.task-name{font-size:14px;margin-bottom:10px;word-break:break-word}
+.task-name span{color:var(--muted)}
+.proof{background:var(--bg);border:1px solid var(--card-border);border-radius:10px;padding:12px;margin-bottom:12px;font-size:13px;word-break:break-word}
+.proof img{display:block;width:100%;max-height:220px;object-fit:contain;border-radius:8px;cursor:zoom-in}
+.proof .lbl{color:var(--muted);font-size:12px;margin-bottom:6px}
+.when{color:var(--muted);font-size:12px;margin-bottom:12px}
+.note{font-size:12px;margin-bottom:4px;line-height:1.5}
+.note.ok{color:var(--ok)}
+.note.bad{color:#ff9b9b}
+.actions{display:flex;gap:8px}
+.actions button{flex:1;padding:12px 6px;border-radius:8px;font-size:14px;font-weight:bold;cursor:pointer;border:1px solid var(--card-border)}
+.approve{background:var(--ok);color:#06241a;border-color:var(--ok)!important}
+.reject{background:transparent;color:var(--danger);border-color:rgba(255,107,107,.5)!important}
+
+.empty{background:var(--card);border:1px dashed var(--card-border);border-radius:14px;padding:40px 20px;text-align:center;color:var(--muted);font-size:14px;line-height:1.6}
+.empty .big{font-size:38px;display:block;margin-bottom:12px}
+
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);opacity:0;pointer-events:none;transition:opacity .25s;z-index:60}
+.overlay.show{opacity:1;pointer-events:auto}
+.sheet{position:fixed;left:50%;bottom:0;transform:translate(-50%,100%);width:100%;max-width:560px;max-height:90vh;overflow-y:auto;background:#0a1f3d;border:1px solid var(--card-border);border-radius:20px 20px 0 0;padding:20px 20px calc(24px + env(safe-area-inset-bottom));transition:transform .3s ease;z-index:70}
+.sheet.show{transform:translate(-50%,0)}
+.sheet h3{font-size:18px;margin-bottom:10px}
+.sheet p{color:var(--muted);font-size:14px;line-height:1.5;margin-bottom:16px}
+.sheet textarea{width:100%;min-height:80px;padding:13px;background:var(--card);border:1px solid #34516f;border-radius:8px;color:#fff;font-family:inherit;font-size:15px;outline:none;margin-bottom:16px;resize:vertical}
+.sheet textarea:focus{border-color:var(--gold)}
+.btn{width:100%;padding:14px;background:var(--gold);color:var(--bg);border:none;border-radius:8px;font-weight:bold;font-size:15px;cursor:pointer}
+.btn.green{background:var(--ok);color:#06241a}
+.btn.red{background:var(--danger);color:#fff}
+.btn.ghost{background:transparent;color:var(--gold);border:1px solid var(--gold);margin-top:10px}
+.btn:disabled{opacity:.6;cursor:not-allowed}
+button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+
+#viewer{position:fixed;inset:0;background:rgba(0,0,0,.92);display:none;align-items:center;justify-content:center;z-index:100;padding:16px;cursor:zoom-out}
+#viewer.show{display:flex}
+#viewer img{max-width:100%;max-height:100%;object-fit:contain}
+
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translate(-50%,20px);background:var(--card);border:1px solid var(--gold);color:#fff;padding:12px 20px;border-radius:8px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;z-index:110;max-width:90%;text-align:center}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+#loader{position:fixed;inset:0;background:radial-gradient(circle at 50% 40%,#12305a 0%,var(--bg) 65%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:30px;z-index:200;padding:24px;transition:opacity .5s ease,visibility .5s ease}
+#loader.hide{opacity:0;visibility:hidden}
+.loader-ring{position:relative;width:110px;height:110px;display:flex;align-items:center;justify-content:center}
+.loader-ring::before,.loader-ring::after{content:"";position:absolute;inset:0;border-radius:50%;border:2px solid transparent}
+.loader-ring::before{border-top-color:var(--gold);border-right-color:var(--gold);animation:spin 1.1s linear infinite}
+.loader-ring::after{inset:10px;border-bottom-color:rgba(245,199,107,.5);border-left-color:rgba(245,199,107,.5);animation:spin 1.8s linear infinite reverse}
+.loader-mark{color:var(--gold);font-size:38px;font-weight:bold;animation:pulse 1.6s ease-in-out infinite}
+.loader-brand{text-align:center}
+.loader-brand h1{font-size:20px;letter-spacing:4px;background:linear-gradient(90deg,#b88a1a,#f5c76b,#fff2c4,#f5c76b,#b88a1a);background-size:200% auto;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:shine 2.2s linear infinite;margin-bottom:8px}
+.loader-brand p{color:var(--muted);font-size:12px;letter-spacing:1px}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(.88);opacity:.7}}
+@keyframes shine{to{background-position:200% center}}
+#denied{display:none;text-align:center;max-width:420px}
+#denied h3{color:var(--gold);font-size:20px}
+#denied p{color:#bbb;font-size:13px;margin-top:10px;line-height:1.5}
+#denied button{max-width:260px;margin:20px auto 0;display:block;background:var(--card);border:1px solid var(--gold);color:var(--gold);padding:15px;border-radius:8px;font-size:15px;width:100%;cursor:pointer}
+#loader.denied .loader-ring,#loader.denied .loader-brand{display:none}
+#loader.denied #denied{display:block}
+#app{visibility:hidden}
+</style>
+</head>
+<body>
+
+<div id="loader">
+  <div class="loader-ring"><div class="loader-mark">〆</div></div>
+  <div class="loader-brand">
+    <h1>TREND WAVE</h1>
+    <p>Preparing your dashboard...</p>
+  </div>
+  <div id="denied">
+    <h3 id="deniedTitle"></h3>
+    <p id="deniedText"></p>
+    <button type="button" id="deniedBtn">Go to login</button>
+  </div>
+</div>
+
+<div id="app">
+  <header>
+    <button class="back" id="backBtn" aria-label="Back">‹</button>
+    <div>
+      <h2>Task Submissions</h2>
+      <p id="summary">Administrator Panel</p>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="filters" id="filters">
+      <button data-filter="pending" class="active">Pending</button>
+      <button data-filter="approved">Approved</button>
+      <button data-filter="rejected">Rejected</button>
+    </div>
+
+    <div id="list"></div>
+
+    <div class="empty" id="empty" style="display:none">
+      <span class="big">📥</span>
+      <span id="emptyText"></span>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay"></div>
+
+<div class="sheet" id="decisionSheet">
+  <h3 id="decTitle"></h3>
+  <p id="decText"></p>
+  <textarea id="decNote" placeholder="Reason for rejecting (shown to the user)" maxlength="200" style="display:none"></textarea>
+  <button type="button" class="btn" id="decConfirm">Confirm</button>
+  <button type="button" class="btn ghost" id="decCancel">Cancel</button>
+</div>
+
+<div id="viewer"><img id="viewerImg" alt="Proof screenshot"></div>
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, collection, doc, onSnapshot, runTransaction, writeBatch, updateDoc, serverTimestamp, increment } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyB3iNjyk71CM0w0TwsI0T4EKlgku4oaUOE",
+  authDomain: "trend-wave-d5a7b.firebaseapp.com",
+  projectId: "trend-wave-d5a7b",
+  storageBucket: "trend-wave-d5a7b.firebasestorage.app",
+  messagingSenderId: "403305458793",
+  appId: "1:403305458793:web:9df8a535500c403ed0c6f8",
+  measurementId: "G-1ZX8YNF81Y"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const ADMIN_UID = "DEKlRtipYTMIaBNkSzMtrGNNFXr2";
+const $ = (id) => document.getElementById(id);
+
+let all = [];
+let filter = "pending";
+let current = null;
+let action = null;
+let unsubscribe = null;
+
+const naira = (n) => "₦" + Number(n || 0).toLocaleString("en-NG", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+const initials = (t) => { const p = (t || "?").trim().split(/\s+/); return ((p[0][0] || "?") + (p[1] ? p[1][0] : "")).toUpperCase(); };
+
+let toastTimer;
+function showToast(text) {
+  const t = $("toast");
+  t.textContent = text;
+  t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("show"), 2600);
+}
+
+function fmtDate(ts) {
+  if (!ts || !ts.toDate) return "Just now";
+  return ts.toDate().toLocaleString("en-NG", { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" });
+}
+
+/* ---------- Access control ---------- */
+function denyAccess(title, detail) {
+  $("deniedTitle").textContent = title;
+  $("deniedText").textContent = detail;
+  $("loader").classList.add("denied");
+}
+$("deniedBtn").addEventListener("click", async () => {
+  try { await signOut(auth); } finally { location.replace("login.html"); }
+});
+$("backBtn").addEventListener("click", () => { location.href = "admin-dashboard.html"; });
+
+onAuthStateChanged(auth, (user) => {
+  if (!user) return denyAccess("Not signed in", "Log in from the same site this page is hosted on.");
+  if (user.uid !== ADMIN_UID) return denyAccess("Not an admin", "This account isn't authorised to review submissions.");
+  $("app").style.visibility = "visible";
+  listen();
+  setTimeout(() => $("loader").classList.add("hide"), 900);
+});
+
+/* ---------- Load (live) ---------- */
+function listen() {
+  if (unsubscribe) unsubscribe();
+  unsubscribe = onSnapshot(
+    collection(db, "submissions"),
+    (snap) => {
+      all = snap.docs.map((d) => Object.assign({ id: d.id }, d.data()));
+      const time = (s) => (s.createdAt && s.createdAt.toMillis ? s.createdAt.toMillis() : Date.now());
+      all.sort((a, b) => time(b) - time(a));
+      render();
+    },
+    (err) => { console.error(err); showToast("Couldn't load: " + (err.code || "error")); }
+  );
+}
+
+/* ---------- Render ---------- */
+function render() {
+  const pending = all.filter((s) => s.status === "pending").length;
+  $("summary").textContent = pending + " waiting for review";
+
+  const shown = all.filter((s) => s.status === filter);
+  const list = $("list");
+  list.innerHTML = "";
+  $("empty").style.display = shown.length ? "none" : "block";
+  $("emptyText").textContent = filter === "pending" ? "Nothing to review right now." : "No " + filter + " submissions yet.";
+
+  shown.forEach((s) => {
+    const card = document.createElement("div");
+    card.className = "sub";
+
+    const top = document.createElement("div");
+    top.className = "sub-top";
+    const av = document.createElement("div");
+    av.className = "av";
+    av.textContent = initials(s.userName || s.userEmail);
+    const who = document.createElement("div");
+    who.className = "who";
+    const nm = document.createElement("b");
+    nm.textContent = s.userName || "User";
+    const em = document.createElement("small");
+    em.textContent = s.userEmail || s.userId;
+    who.append(nm, em);
+    const rw = document.createElement("div");
+    rw.className = "reward";
+    rw.textContent = naira(s.reward);
+    top.append(av, who, rw);
+
+    const task = document.createElement("div");
+    task.className = "task-name";
+    const tl = document.createElement("span");
+    tl.textContent = "Task: ";
+    task.append(tl, document.createTextNode(s.taskTitle || s.taskId));
+
+    card.append(top, task);
+
+    if (s.proofType !== "none") {
+      const proof = document.createElement("div");
+      proof.className = "proof";
+      const lbl = document.createElement("div");
+      lbl.className = "lbl";
+      if (s.proofImage) {
+        lbl.textContent = "Screenshot (tap to enlarge)";
+        const img = document.createElement("img");
+        img.src = s.proofImage;
+        img.alt = "Proof screenshot";
+        img.addEventListener("click", () => { $("viewerImg").src = s.proofImage; $("viewer").classList.add("show"); });
+        proof.append(lbl, img);
+      } else {
+        lbl.textContent = "Username / details";
+        proof.append(lbl, document.createTextNode(s.proofText || "—"));
+      }
+      card.appendChild(proof);
+    }
+
+    const when = document.createElement("div");
+    when.className = "when";
+    when.textContent = "Submitted " + fmtDate(s.createdAt);
+    card.appendChild(when);
+
+    if (s.status === "pending") {
+      const actions = document.createElement("div");
+      actions.className = "actions";
+      const rej = document.createElement("button");
+      rej.className = "reject";
+      rej.textContent = "Reject";
+      rej.addEventListener("click", () => openDecision(s, "reject"));
+      const ok = document.createElement("button");
+      ok.className = "approve";
+      ok.textContent = "Approve";
+      ok.addEventListener("click", () => openDecision(s, "approve"));
+      actions.append(rej, ok);
+      card.appendChild(actions);
+    } else {
+      const n = document.createElement("div");
+      n.className = "note " + (s.status === "approved" ? "ok" : "bad");
+      n.textContent = s.status === "approved"
+        ? "Approved · " + naira(s.reward) + " paid · " + fmtDate(s.reviewedAt)
+        : "Rejected" + (s.reviewNote ? ": " + s.reviewNote : "") + " · " + fmtDate(s.reviewedAt);
+      card.appendChild(n);
+    }
+
+    list.appendChild(card);
+  });
+}
+
+document.querySelectorAll("#filters button").forEach((b) => {
+  b.addEventListener("click", () => {
+    filter = b.dataset.filter;
+    document.querySelectorAll("#filters button").forEach((x) => x.classList.toggle("active", x === b));
+    render();
+  });
+});
+
+$("viewer").addEventListener("click", () => $("viewer").classList.remove("show"));
+
+/* ---------- Decision sheet ---------- */
+function closeSheet() {
+  $("overlay").classList.remove("show");
+  $("decisionSheet").classList.remove("show");
+  current = null;
+  action = null;
+}
+$("overlay").addEventListener("click", closeSheet);
+$("decCancel").addEventListener("click", closeSheet);
+
+function openDecision(s, type) {
+  current = s;
+  action = type;
+  const name = s.userName || s.userEmail || "this user";
+  const btn = $("decConfirm");
+
+  if (type === "approve") {
+    $("decTitle").textContent = "Approve submission?";
+    $("decText").textContent = naira(s.reward) + " will be added to " + name + "'s balance and the task counts as completed.";
+    $("decNote").style.display = "none";
+    btn.textContent = "Approve and pay " + naira(s.reward);
+    btn.className = "btn green";
+  } else {
+    $("decTitle").textContent = "Reject submission?";
+    $("decText").textContent = name + " will see it was rejected and can submit again.";
+    $("decNote").style.display = "block";
+    $("decNote").value = "";
+    btn.textContent = "Reject";
+    btn.className = "btn red";
+  }
+
+  $("overlay").classList.add("show");
+  $("decisionSheet").classList.add("show");
+}
+
+$("decConfirm").addEventListener("click", async () => {
+  if (!current || !action) return;
+
+  const s = current;
+  const type = action;
+  const btn = $("decConfirm");
+  const label = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = "Working...";
+
+  try {
+    if (type === "approve") {
+      await runTransaction(db, async (tx) => {
+        const subRef = doc(db, "submissions", s.id);
+        const userRef = doc(db, "users", s.userId);
+        const refRef = doc(db, "referrals", s.userId);
+        const txRef = doc(collection(db, "transactions"));
+
+        // ---- reads first ----
+        const subSnap = await tx.get(subRef);
+        if (!subSnap.exists() || subSnap.data().status !== "pending") throw new Error("already-reviewed");
+        const userSnap = await tx.get(userRef);
+        if (!userSnap.exists()) throw new Error("no-user");
+
+        const settingsSnap = await tx.get(doc(db, "settings", "app"));
+        const cfg = settingsSnap.exists() ? settingsSnap.data() : {};
+        const REFERRAL_TASKS = Number(cfg.referralTasks) || 5;
+        const REFERRAL_BONUS = cfg.referralBonus === 0 ? 0 : (Number(cfg.referralBonus) || 100);
+
+        const refSnap = await tx.get(refRef);
+        const countsForReferral = refSnap.exists() && !refSnap.data().rewarded;
+        const newCount = countsForReferral ? (Number(refSnap.data().tasksDone) || 0) + 1 : 0;
+        let referrerRef = null;
+        let referrerSnap = null;
+        if (countsForReferral && newCount >= REFERRAL_TASKS) {
+          referrerRef = doc(db, "users", refSnap.data().referrerId);
+          referrerSnap = await tx.get(referrerRef);
+        }
+
+        const reward = Number(subSnap.data().reward) || 0;
+
+        // ---- writes ----
+        tx.update(subRef, { status: "approved", reviewedAt: serverTimestamp(), reviewedBy: ADMIN_UID });
+        tx.update(userRef, { balance: increment(reward), tasksCompleted: increment(1) });
+        tx.set(txRef, {
+          userId: s.userId,
+          type: "task_reward",
+          title: "Task reward: " + (s.taskTitle || "Task"),
+          amount: reward,
+          status: "completed",
+          submissionId: s.id,
+          createdAt: serverTimestamp()
+        });
+        tx.set(doc(collection(db, "notifications")), {
+          userId: s.userId,
+          icon: "✅",
+          title: "Task approved",
+          text: "You earned " + naira(reward) + " for \u201C" + (s.taskTitle || "your task") + "\u201D.",
+          createdAt: serverTimestamp()
+        });
+
+        // ---- referral progress ----
+        if (countsForReferral) {
+          if (referrerSnap && referrerSnap.exists()) {
+            const referrerId = refSnap.data().referrerId;
+            tx.update(refRef, { tasksDone: newCount, rewarded: true, rewardedAt: serverTimestamp() });
+            tx.update(referrerRef, { balance: increment(REFERRAL_BONUS), referralCount: increment(1) });
+            tx.set(doc(collection(db, "transactions")), {
+              userId: referrerId,
+              type: "referral_bonus",
+              title: "Referral bonus",
+              amount: REFERRAL_BONUS,
+              status: "completed",
+              createdAt: serverTimestamp()
+            });
+            tx.set(doc(collection(db, "notifications")), {
+              userId: referrerId,
+              icon: "🎁",
+              title: "Referral reward",
+              text: "Your referral completed " + REFERRAL_TASKS + " tasks. " + naira(REFERRAL_BONUS) + " has been added to your balance.",
+              createdAt: serverTimestamp()
+            });
+          } else {
+            tx.update(refRef, { tasksDone: newCount });
+          }
+        }
+      });
+      showToast("Approved. " + naira(s.reward) + " paid.");
+    } else {
+      const note = $("decNote").value.trim();
+      const batch = writeBatch(db);
+      batch.update(doc(db, "submissions", s.id), {
+        status: "rejected",
+        reviewNote: note,
+        reviewedAt: serverTimestamp(),
+        reviewedBy: ADMIN_UID
+      });
+      batch.set(doc(collection(db, "notifications")), {
+        userId: s.userId,
+        icon: "❌",
+        title: "Task rejected",
+        text: "\u201C" + (s.taskTitle || "Your task") + "\u201D was rejected." + (note ? " Reason: " + note + "." : "") + " You can submit it again.",
+        createdAt: serverTimestamp()
+      });
+      await batch.commit();
+      showToast("Submission rejected");
+    }
+    closeSheet();
+  } catch (err) {
+    console.error(err);
+    const msg = err.message === "already-reviewed" ? "This submission was already reviewed."
+      : err.message === "no-user" ? "This user's account no longer exists."
+      : "Couldn't finish: " + (err.code || err.message);
+    showToast(msg);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = label;
+  }
+});
+</script>
+</body>
+</html>

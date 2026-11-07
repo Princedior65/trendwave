@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Register | Trend Wave</title>
+
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background: #07172f;
+  color: white;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+.container {
+  background: #102b4c;
+  border: 1px solid #294361;
+  width: 100%;
+  max-width: 410px;
+  padding: 30px;
+  border-radius: 15px;
+}
+
+.logo {
+  color: #f5c76b;
+  text-align: center;
+  font-size: 25px;
+  font-weight: bold;
+  margin-bottom: 25px;
+}
+
+h2 {
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.subtitle {
+  text-align: center;
+  color: #b8c5d8;
+  font-size: 13px;
+  margin-bottom: 25px;
+}
+
+label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+input {
+  width: 100%;
+  padding: 14px;
+  background: #07172f;
+  border: 1px solid #34516f;
+  border-radius: 7px;
+  color: white;
+  font-size: 15px;
+  margin-bottom: 18px;
+  outline: none;
+}
+
+input:focus {
+  border-color: #f5c76b;
+}
+
+button {
+  width: 100%;
+  padding: 15px;
+  background: #f5c76b;
+  color: #07172f;
+  border: none;
+  border-radius: 7px;
+  font-weight: bold;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+#message {
+  margin-top: 15px;
+  text-align: center;
+  font-size: 13px;
+  line-height: 1.5;
+  min-height: 20px;
+}
+
+.login {
+  text-align: center;
+  color: #b8c5d8;
+  font-size: 14px;
+  margin-top: 22px;
+}
+
+a {
+  color: #f5c76b;
+  text-decoration: none;
+}
+
+.back {
+  display: block;
+  text-align: center;
+  margin-top: 20px;
+  color: #b8c5d8;
+  font-size: 13px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <div class="logo">ᴛʀᴇɴᴅ ᴡᴀᴠᴇ 〆</div>
+
+  <h2>Create Account</h2>
+
+  <p class="subtitle">
+    Join Trend Wave and start exploring earning opportunities.
+  </p>
+
+  <form id="registerForm">
+
+    <label for="name">Full Name</label>
+    <input type="text" id="name"
+      placeholder="Enter your full name" autocomplete="name" required>
+
+    <label for="email">Email Address</label>
+    <input type="email" id="email"
+      placeholder="Enter your email" autocomplete="email" required>
+
+    <label for="password">Password</label>
+    <input type="password" id="password"
+      placeholder="Create password" minlength="8" autocomplete="new-password" required>
+
+    <label for="confirmPassword">Confirm Password</label>
+    <input type="password" id="confirmPassword"
+      placeholder="Confirm password" minlength="8" autocomplete="new-password" required>
+
+    <button type="submit" id="registerBtn">
+      Create Account →
+    </button>
+
+    <div id="message" role="status" aria-live="polite"></div>
+
+  </form>
+
+  <p class="login">
+    Already have an account?
+    <a href="login.html">Login</a>
+  </p>
+
+  <a href="index.html" class="back">← Back to Homepage</a>
+
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+<script>
+
+// FIREBASE CONFIGURATION
+
+const firebaseConfig = {
+  apiKey: "AIzaSyB3iNjyk71CM0w0TwsI0T4EKlgku4oaUOE",
+  authDomain: "trend-wave-d5a7b.firebaseapp.com",
+  projectId: "trend-wave-d5a7b",
+  storageBucket: "trend-wave-d5a7b.firebasestorage.app",
+  messagingSenderId: "403305458793",
+  appId: "1:403305458793:web:9df8a535500c403ed0c6f8",
+  measurementId: "G-1ZX8YNF81Y"
+};
+
+firebase.initializeApp(firebaseConfig);
+
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+// The referral code in the link is the referrer's user ID
+const referralCodeUsed =
+  (new URLSearchParams(window.location.search).get("ref") || "").trim();
+
+document.getElementById("registerForm")
+.addEventListener("submit", async function(e) {
+
+  e.preventDefault();
+
+  const name = document.getElementById("name").value.trim();
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value;
+  const confirmPassword = document.getElementById("confirmPassword").value;
+
+  const message = document.getElementById("message");
+  const button = document.getElementById("registerBtn");
+
+  if (password !== confirmPassword) {
+    message.style.color = "#ff7777";
+    message.textContent = "Passwords do not match!";
+    return;
+  }
+
+  button.disabled = true;
+  button.textContent = "Creating Account...";
+  message.textContent = "";
+
+  let accountCreated = false;
+
+  try {
+
+    // Create Firebase account
+    const result = await auth.createUserWithEmailAndPassword(
+      email,
+      password
+    );
+
+    accountCreated = true;
+
+    // Save user's name
+    await result.user.updateProfile({
+      displayName: name
+    });
+
+    const uid = result.user.uid;
+
+    // Who invited this user (empty if nobody, or if it's their own ID)
+    const invitedBy =
+      referralCodeUsed && referralCodeUsed !== uid ? referralCodeUsed : "";
+
+    // Save the profile
+    await db.collection("users").doc(uid).set({
+      name: name,
+      email: email,
+      balance: 0,
+      referralCount: 0,
+      tasksCompleted: 0,
+      referralCode: uid,
+      referredBy: invitedBy,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    // Tell the referrer. This shows in their Refer tab (0/5) and notifications.
+    // No reward yet: it is paid after this user completes 5 tasks.
+    if (invitedBy) {
+      try {
+        // Use the current referral settings in the message
+        let cfg = {};
+        try {
+          const s = await db.collection("settings").doc("app").get();
+          if (s.exists) cfg = s.data();
+        } catch (e) {}
+        const needTasks = Number(cfg.referralTasks) || 5;
+        const bonus = cfg.referralBonus === 0 ? 0 : (Number(cfg.referralBonus) || 100);
+
+        const stamp = firebase.firestore.FieldValue.serverTimestamp();
+        const batch = db.batch();
+
+        batch.set(db.collection("referrals").doc(uid), {
+          referrerId: invitedBy,
+          name: name.split(" ")[0],
+          tasksDone: 0,
+          rewarded: false,
+          createdAt: stamp
+        });
+
+        batch.set(db.collection("notifications").doc("ref_" + uid), {
+          userId: invitedBy,
+          icon: "👥",
+          title: "New referral",
+          text: "Someone used your link. Once they complete " + needTasks + " tasks, you receive ₦" + bonus.toLocaleString("en-NG") + ".",
+          createdAt: stamp
+        });
+
+        await batch.commit();
+      } catch (refErr) {
+        // Not a problem: the dashboard retries this on first login
+      }
+    }
+
+    message.style.color = "#70e6a0";
+    message.textContent =
+      "Account created successfully! Redirecting...";
+
+    document.getElementById("registerForm").reset();
+
+    setTimeout(function() {
+      window.location.href = "dashboard.html";
+    }, 1200);
+
+  } catch (error) {
+
+    message.style.color = "#ff7777";
+
+    if (accountCreated) {
+      message.textContent =
+        "Your account was created, but your profile could not be saved. Please contact support before registering again.";
+    } else {
+
+      const errors = {
+        "auth/email-already-in-use": "This email is already registered.",
+        "auth/invalid-email": "Please enter a valid email.",
+        "auth/weak-password": "Your password is too weak.",
+        "auth/network-request-failed": "Check your internet connection.",
+        "auth/operation-not-allowed": "Email/Password sign-in is not enabled in Firebase.",
+        "auth/too-many-requests": "Too many attempts. Please try again later."
+      };
+
+      message.textContent =
+        errors[error.code] || error.message;
+    }
+
+  } finally {
+
+    button.disabled = false;
+    button.textContent = "Create Account →";
+
+  }
+
+});
+
+</script>
+
+</body>
+</html>

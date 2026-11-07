@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Manage Users | Trend Wave</title>
+<style>
+:root{--bg:#07172f;--card:#102b4c;--card-border:#234467;--gold:#f5c76b;--muted:#aab6ca;--danger:#ff6b6b;--ok:#70e6a0}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:Arial,sans-serif;background:var(--bg);color:#fff;min-height:100vh}
+
+header{background:var(--card);padding:16px 20px;border-bottom:1px solid var(--gold);display:flex;align-items:center;gap:14px}
+.back{width:40px;height:40px;border-radius:50%;background:var(--bg);border:1px solid var(--card-border);color:#fff;font-size:20px;cursor:pointer;flex-shrink:0}
+header h2{color:var(--gold);font-size:18px}
+header p{color:#bbb;margin-top:3px;font-size:12px}
+
+.container{padding:20px;max-width:700px;margin:auto;padding-bottom:calc(40px + env(safe-area-inset-bottom))}
+
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.stat{background:var(--card);border:1px solid var(--card-border);border-radius:12px;padding:16px}
+.stat p{color:var(--muted);font-size:12px;margin-bottom:6px}
+.stat h3{color:var(--gold);font-size:22px}
+
+.search{width:100%;padding:14px;background:var(--card);border:1px solid #34516f;border-radius:10px;color:#fff;font-size:15px;outline:none;margin-bottom:16px}
+.search:focus{border-color:var(--gold)}
+
+.user{background:var(--card);border:1px solid var(--card-border);border-radius:14px;padding:14px;margin-bottom:10px;cursor:pointer;transition:border-color .2s}
+.user:active{border-color:var(--gold)}
+.user.blocked{border-color:rgba(255,107,107,.5)}
+.u-top{display:flex;align-items:center;gap:12px}
+.av{width:44px;height:44px;border-radius:50%;background:var(--gold);color:var(--bg);font-weight:bold;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.who{flex:1;min-width:0}
+.who b{display:block;font-size:15px;word-break:break-word}
+.who small{color:var(--muted);font-size:12px;word-break:break-all}
+.bal{color:var(--gold);font-weight:bold;font-size:15px;white-space:nowrap}
+.u-meta{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;color:var(--muted);font-size:12px}
+.pill{padding:2px 9px;border-radius:10px;font-size:11px;font-weight:bold;background:rgba(255,107,107,.15);color:var(--danger)}
+
+.empty{background:var(--card);border:1px dashed var(--card-border);border-radius:14px;padding:40px 20px;text-align:center;color:var(--muted);font-size:14px;line-height:1.6}
+.empty .big{font-size:38px;display:block;margin-bottom:12px}
+
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);opacity:0;pointer-events:none;transition:opacity .25s;z-index:60}
+.overlay.show{opacity:1;pointer-events:auto}
+.sheet{position:fixed;left:50%;bottom:0;transform:translate(-50%,100%);width:100%;max-width:560px;max-height:92vh;overflow-y:auto;background:#0a1f3d;border:1px solid var(--card-border);border-radius:20px 20px 0 0;padding:20px 20px calc(24px + env(safe-area-inset-bottom));transition:transform .3s ease;z-index:70}
+.sheet.show{transform:translate(-50%,0)}
+.sheet.top{z-index:75}
+.sheet h3{font-size:18px;margin-bottom:6px;word-break:break-word}
+.sheet .sub{color:var(--muted);font-size:13px;margin-bottom:16px;line-height:1.5;word-break:break-word}
+
+.info{background:var(--bg);border:1px solid var(--card-border);border-radius:12px;margin-bottom:16px;overflow:hidden}
+.info div{display:flex;justify-content:space-between;gap:16px;padding:12px 14px;border-bottom:1px solid var(--card-border);font-size:14px}
+.info div:last-child{border-bottom:none}
+.info span:first-child{color:var(--muted);flex-shrink:0}
+.info span:last-child{text-align:right;word-break:break-all}
+
+.field{margin-bottom:14px}
+.field label{display:block;font-size:14px;margin-bottom:8px}
+.field input,.field select,.field textarea{width:100%;padding:13px;background:var(--card);border:1px solid #34516f;border-radius:8px;color:#fff;font-family:inherit;font-size:15px;outline:none}
+.field textarea{min-height:80px;resize:vertical}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--gold)}
+
+.btn{width:100%;padding:14px;background:var(--gold);color:var(--bg);border:none;border-radius:8px;font-weight:bold;font-size:15px;cursor:pointer;margin-top:10px}
+.btn.outline{background:transparent;color:var(--gold);border:1px solid var(--gold)}
+.btn.red{background:var(--danger);color:#fff}
+.btn.green{background:var(--ok);color:#06241a}
+.btn.ghost{background:transparent;color:var(--muted);border:1px solid var(--card-border)}
+.btn:disabled{opacity:.6;cursor:not-allowed}
+button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.msg{margin-top:12px;text-align:center;font-size:13px;min-height:18px}
+
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translate(-50%,20px);background:var(--card);border:1px solid var(--gold);color:#fff;padding:12px 20px;border-radius:8px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;z-index:110;max-width:90%;text-align:center}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+#loader{position:fixed;inset:0;background:radial-gradient(circle at 50% 40%,#12305a 0%,var(--bg) 65%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:30px;z-index:200;padding:24px;transition:opacity .5s ease,visibility .5s ease}
+#loader.hide{opacity:0;visibility:hidden}
+.loader-ring{position:relative;width:110px;height:110px;display:flex;align-items:center;justify-content:center}
+.loader-ring::before,.loader-ring::after{content:"";position:absolute;inset:0;border-radius:50%;border:2px solid transparent}
+.loader-ring::before{border-top-color:var(--gold);border-right-color:var(--gold);animation:spin 1.1s linear infinite}
+.loader-ring::after{inset:10px;border-bottom-color:rgba(245,199,107,.5);border-left-color:rgba(245,199,107,.5);animation:spin 1.8s linear infinite reverse}
+.loader-mark{color:var(--gold);font-size:38px;font-weight:bold;animation:pulse 1.6s ease-in-out infinite}
+.loader-brand{text-align:center}
+.loader-brand h1{font-size:20px;letter-spacing:4px;background:linear-gradient(90deg,#b88a1a,#f5c76b,#fff2c4,#f5c76b,#b88a1a);background-size:200% auto;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:shine 2.2s linear infinite;margin-bottom:8px}
+.loader-brand p{color:var(--muted);font-size:12px;letter-spacing:1px}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(.88);opacity:.7}}
+@keyframes shine{to{background-position:200% center}}
+#denied{display:none;text-align:center;max-width:420px}
+#denied h3{color:var(--gold);font-size:20px}
+#denied p{color:#bbb;font-size:13px;margin-top:10px;line-height:1.5}
+#denied button{max-width:260px;margin:20px auto 0;display:block;background:var(--card);border:1px solid var(--gold);color:var(--gold);padding:15px;border-radius:8px;font-size:15px;width:100%;cursor:pointer}
+#loader.denied .loader-ring,#loader.denied .loader-brand{display:none}
+#loader.denied #denied{display:block}
+#app{visibility:hidden}
+</style>
+</head>
+<body>
+
+<div id="loader">
+  <div class="loader-ring"><div class="loader-mark">〆</div></div>
+  <div class="loader-brand">
+    <h1>TREND WAVE</h1>
+    <p>Preparing your dashboard...</p>
+  </div>
+  <div id="denied">
+    <h3 id="deniedTitle"></h3>
+    <p id="deniedText"></p>
+    <button type="button" id="deniedBtn">Go to login</button>
+  </div>
+</div>
+
+<div id="app">
+  <header>
+    <button class="back" id="backBtn" aria-label="Back">‹</button>
+    <div>
+      <h2>Manage Users</h2>
+      <p>Administrator Panel</p>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="stats">
+      <div class="stat"><p>Total users</p><h3 id="statUsers">–</h3></div>
+      <div class="stat"><p>Total balances</p><h3 id="statBalance">–</h3></div>
+    </div>
+
+    <input type="search" class="search" id="search" placeholder="Search by name or email" autocomplete="off">
+
+    <div id="list"></div>
+
+    <div class="empty" id="empty" style="display:none">
+      <span class="big">👥</span>
+      <span id="emptyText">No users found.</span>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay"></div>
+
+<!-- User details -->
+<div class="sheet" id="detailSheet">
+  <h3 id="dName">-</h3>
+  <p class="sub" id="dEmail">-</p>
+  <div class="info" id="dInfo"></div>
+  <button type="button" class="btn" id="adjustBtn">Adjust balance</button>
+  <button type="button" class="btn outline" id="messageBtn">Send notification</button>
+  <button type="button" class="btn red" id="blockBtn">Block account</button>
+  <button type="button" class="btn ghost" id="detailClose">Close</button>
+</div>
+
+<!-- Adjust balance -->
+<div class="sheet top" id="adjustSheet">
+  <h3>Adjust balance</h3>
+  <p class="sub" id="adjustSub"></p>
+  <div class="field">
+    <label for="adjMode">Action</label>
+    <select id="adjMode">
+      <option value="add">Add money</option>
+      <option value="deduct">Deduct money</option>
+    </select>
+  </div>
+  <div class="field">
+    <label for="adjAmount">Amount (₦)</label>
+    <input type="number" id="adjAmount" min="1" step="any" inputmode="decimal" placeholder="e.g. 500">
+  </div>
+  <div class="field">
+    <label for="adjNote">Note (the user will see it)</label>
+    <input type="text" id="adjNote" maxlength="100" placeholder="e.g. Contest prize">
+  </div>
+  <button type="button" class="btn" id="adjConfirm">Confirm</button>
+  <button type="button" class="btn ghost" id="adjCancel">Cancel</button>
+  <div class="msg" id="adjMsg"></div>
+</div>
+
+<!-- Send notification -->
+<div class="sheet top" id="messageSheet">
+  <h3>Send notification</h3>
+  <p class="sub" id="messageSub"></p>
+  <div class="field">
+    <label for="mTitle">Title</label>
+    <input type="text" id="mTitle" maxlength="60" placeholder="e.g. Important update">
+  </div>
+  <div class="field">
+    <label for="mText">Message</label>
+    <textarea id="mText" maxlength="300" placeholder="Write your message"></textarea>
+  </div>
+  <button type="button" class="btn" id="mConfirm">Send</button>
+  <button type="button" class="btn ghost" id="mCancel">Cancel</button>
+  <div class="msg" id="mMsg"></div>
+</div>
+
+<!-- Block / unblock confirm -->
+<div class="sheet top" id="blockSheet">
+  <h3 id="blockTitle"></h3>
+  <p class="sub" id="blockText"></p>
+  <button type="button" class="btn" id="blockConfirm">Confirm</button>
+  <button type="button" class="btn ghost" id="blockCancel">Cancel</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, collection, doc, onSnapshot, runTransaction, writeBatch, addDoc, serverTimestamp, increment } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyB3iNjyk71CM0w0TwsI0T4EKlgku4oaUOE",
+  authDomain: "trend-wave-d5a7b.firebaseapp.com",
+  projectId: "trend-wave-d5a7b",
+  storageBucket: "trend-wave-d5a7b.firebasestorage.app",
+  messagingSenderId: "403305458793",
+  appId: "1:403305458793:web:9df8a535500c403ed0c6f8",
+  measurementId: "G-1ZX8YNF81Y"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const ADMIN_UID = "DEKlRtipYTMIaBNkSzMtrGNNFXr2";
+const $ = (id) => document.getElementById(id);
+
+let users = [];
+let query = "";
+let selectedId = null;
+let unsubscribe = null;
+
+const naira = (n) => "₦" + Number(n || 0).toLocaleString("en-NG", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+const initials = (t) => { const p = (t || "?").trim().split(/\s+/); return ((p[0][0] || "?") + (p[1] ? p[1][0] : "")).toUpperCase(); };
+const selected = () => users.find((u) => u.id === selectedId) || null;
+
+function fmtDate(ts) {
+  if (!ts || !ts.toDate) return "—";
+  return ts.toDate().toLocaleDateString("en-NG", { day: "numeric", month: "short", year: "numeric" });
+}
+
+let toastTimer;
+function showToast(text) {
+  const t = $("toast");
+  t.textContent = text;
+  t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("show"), 2600);
+}
+
+function setMsg(id, text, ok) {
+  const m = $(id);
+  m.style.color = ok ? "#70e6a0" : "#ff7777";
+  m.textContent = text;
+}
+
+/* ---------- Access control ---------- */
+function denyAccess(title, detail) {
+  $("deniedTitle").textContent = title;
+  $("deniedText").textContent = detail;
+  $("loader").classList.add("denied");
+}
+$("deniedBtn").addEventListener("click", async () => {
+  try { await signOut(auth); } finally { location.replace("login.html"); }
+});
+$("backBtn").addEventListener("click", () => { location.href = "admin-dashboard.html"; });
+
+onAuthStateChanged(auth, (user) => {
+  if (!user) return denyAccess("Not signed in", "Log in from the same site this page is hosted on.");
+  if (user.uid !== ADMIN_UID) return denyAccess("Not an admin", "This account isn't authorised to manage users.");
+  $("app").style.visibility = "visible";
+  listen();
+  setTimeout(() => $("loader").classList.add("hide"), 900);
+});
+
+/* ---------- Load users (live) ---------- */
+function listen() {
+  if (unsubscribe) unsubscribe();
+  unsubscribe = onSnapshot(
+    collection(db, "users"),
+    (snap) => {
+      users = snap.docs.map((d) => Object.assign({ id: d.id }, d.data()));
+      const time = (u) => (u.createdAt && u.createdAt.toMillis ? u.createdAt.toMillis() : 0);
+      users.sort((a, b) => time(b) - time(a));
+      render();
+      if (selectedId && $("detailSheet").classList.contains("show")) fillDetail();
+    },
+    (err) => { console.error(err); showToast("Couldn't load: " + (err.code || "error")); }
+  );
+}
+
+/* ---------- Render list ---------- */
+function render() {
+  $("statUsers").textContent = users.length.toLocaleString();
+  $("statBalance").textContent = naira(users.reduce((s, u) => s + (Number(u.balance) || 0), 0));
+
+  const q = query.trim().toLowerCase();
+  const shown = users.filter((u) => !q || (u.name || "").toLowerCase().includes(q) || (u.email || "").toLowerCase().includes(q));
+
+  const list = $("list");
+  list.innerHTML = "";
+  $("empty").style.display = shown.length ? "none" : "block";
+  $("emptyText").textContent = users.length ? "No users match your search." : "No users yet.";
+
+  shown.forEach((u) => {
+    const card = document.createElement("div");
+    card.className = "user" + (u.blocked ? " blocked" : "");
+    card.addEventListener("click", () => openDetail(u.id));
+
+    const top = document.createElement("div");
+    top.className = "u-top";
+    const av = document.createElement("div");
+    av.className = "av";
+    av.textContent = initials(u.name || u.email);
+    const who = document.createElement("div");
+    who.className = "who";
+    const nm = document.createElement("b");
+    nm.textContent = u.name || "No name";
+    const em = document.createElement("small");
+    em.textContent = u.email || u.id;
+    who.append(nm, em);
+    const bal = document.createElement("div");
+    bal.className = "bal";
+    bal.textContent = naira(u.balance);
+    top.append(av, who, bal);
+
+    const meta = document.createElement("div");
+    meta.className = "u-meta";
+    const parts = ["Tasks: " + (u.tasksCompleted || 0), "Referral bonuses: " + (u.referralCount || 0), "Joined " + fmtDate(u.createdAt)];
+    parts.forEach((p) => { const s = document.createElement("span"); s.textContent = p; meta.appendChild(s); });
+    if (u.blocked) {
+      const pill = document.createElement("span");
+      pill.className = "pill";
+      pill.textContent = "Blocked";
+      meta.appendChild(pill);
+    }
+
+    card.append(top, meta);
+    list.appendChild(card);
+  });
+}
+
+$("search").addEventListener("input", (e) => { query = e.target.value; render(); });
+
+/* ---------- Sheets ---------- */
+function hideSheets() {
+  ["detailSheet", "adjustSheet", "messageSheet", "blockSheet"].forEach((id) => $(id).classList.remove("show"));
+  $("overlay").classList.remove("show");
+  selectedId = null;
+}
+function closeTop(id) { $(id).classList.remove("show"); }
+
+$("overlay").addEventListener("click", () => {
+  const tops = ["adjustSheet", "messageSheet", "blockSheet"].filter((id) => $(id).classList.contains("show"));
+  if (tops.length) tops.forEach(closeTop); else hideSheets();
+});
+$("detailClose").addEventListener("click", hideSheets);
+$("adjCancel").addEventListener("click", () => closeTop("adjustSheet"));
+$("mCancel").addEventListener("click", () => closeTop("messageSheet"));
+$("blockCancel").addEventListener("click", () => closeTop("blockSheet"));
+
+function infoRow(label, value) {
+  const row = document.createElement("div");
+  const a = document.createElement("span");
+  a.textContent = label;
+  const b = document.createElement("span");
+  b.textContent = value || "—";
+  row.append(a, b);
+  return row;
+}
+
+function fillDetail() {
+  const u = selected();
+  if (!u) return;
+
+  $("dName").textContent = u.name || "No name";
+  $("dEmail").textContent = u.email || "";
+
+  const info = $("dInfo");
+  info.innerHTML = "";
+  info.append(
+    infoRow("Balance", naira(u.balance)),
+    infoRow("Tasks completed", String(u.tasksCompleted || 0)),
+    infoRow("Referral bonuses", String(u.referralCount || 0)),
+    infoRow("Joined", fmtDate(u.createdAt)),
+    infoRow("Bank", u.payout ? u.payout.bank : "Not set"),
+    infoRow("Account number", u.payout ? u.payout.number : "Not set"),
+    infoRow("Account name", u.payout ? u.payout.holder : "Not set"),
+    infoRow("Status", u.blocked ? "Blocked" : "Active"),
+    infoRow("User ID", u.id)
+  );
+
+  const b = $("blockBtn");
+  b.textContent = u.blocked ? "Unblock account" : "Block account";
+  b.className = "btn " + (u.blocked ? "green" : "red");
+}
+
+function openDetail(id) {
+  selectedId = id;
+  fillDetail();
+  $("overlay").classList.add("show");
+  $("detailSheet").classList.add("show");
+}
+
+/* ---------- Adjust balance ---------- */
+$("adjustBtn").addEventListener("click", () => {
+  const u = selected();
+  if (!u) return;
+  $("adjustSub").textContent = (u.name || u.email) + " · current balance " + naira(u.balance);
+  $("adjMode").value = "add";
+  $("adjAmount").value = "";
+  $("adjNote").value = "";
+  $("adjMsg").textContent = "";
+  $("adjustSheet").classList.add("show");
+});
+
+$("adjConfirm").addEventListener("click", async () => {
+  const u = selected();
+  if (!u) return;
+
+  const mode = $("adjMode").value;
+  const amount = parseFloat($("adjAmount").value);
+  const note = $("adjNote").value.trim();
+
+  if (!(amount > 0)) return setMsg("adjMsg", "Enter an amount greater than 0.", false);
+
+  const btn = $("adjConfirm");
+  btn.disabled = true;
+  btn.textContent = "Working...";
+
+  try {
+    await runTransaction(db, async (tx) => {
+      const uRef = doc(db, "users", u.id);
+      const snap = await tx.get(uRef);
+      if (!snap.exists()) throw new Error("no-user");
+
+      const balance = Number(snap.data().balance) || 0;
+      if (mode === "deduct" && amount > balance) throw new Error("low-balance");
+
+      tx.update(uRef, { balance: increment(mode === "add" ? amount : -amount) });
+
+      tx.set(doc(collection(db, "transactions")), {
+        userId: u.id,
+        type: mode === "add" ? "bonus" : "deduction",
+        title: note || (mode === "add" ? "Bonus from Trend Wave" : "Balance adjustment"),
+        amount: amount,
+        status: "completed",
+        createdAt: serverTimestamp()
+      });
+
+      tx.set(doc(collection(db, "notifications")), {
+        userId: u.id,
+        icon: mode === "add" ? "🎁" : "⚠️",
+        title: mode === "add" ? "Balance added" : "Balance adjusted",
+        text: (mode === "add" ? naira(amount) + " was added to your balance." : naira(amount) + " was deducted from your balance.") + (note ? " Note: " + note : ""),
+        createdAt: serverTimestamp()
+      });
+    });
+
+    closeTop("adjustSheet");
+    showToast(mode === "add" ? naira(amount) + " added" : naira(amount) + " deducted");
+  } catch (err) {
+    console.error(err);
+    setMsg(
+      "adjMsg",
+      err.message === "low-balance" ? "That's more than their balance."
+        : err.message === "no-user" ? "This user no longer exists."
+        : "Couldn't finish: " + (err.code || err.message),
+      false
+    );
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Confirm";
+  }
+});
+
+/* ---------- Send notification ---------- */
+$("messageBtn").addEventListener("click", () => {
+  const u = selected();
+  if (!u) return;
+  $("messageSub").textContent = "To " + (u.name || u.email);
+  $("mTitle").value = "";
+  $("mText").value = "";
+  $("mMsg").textContent = "";
+  $("messageSheet").classList.add("show");
+});
+
+$("mConfirm").addEventListener("click", async () => {
+  const u = selected();
+  if (!u) return;
+
+  const title = $("mTitle").value.trim();
+  const text = $("mText").value.trim();
+  if (title.length < 2) return setMsg("mMsg", "Enter a title.", false);
+  if (text.length < 2) return setMsg("mMsg", "Write a message.", false);
+
+  const btn = $("mConfirm");
+  btn.disabled = true;
+  btn.textContent = "Sending...";
+
+  try {
+    await addDoc(collection(db, "notifications"), {
+      userId: u.id,
+      icon: "📢",
+      title: title,
+      text: text,
+      createdAt: serverTimestamp()
+    });
+    closeTop("messageSheet");
+    showToast("Notification sent");
+  } catch (err) {
+    console.error(err);
+    setMsg("mMsg", "Couldn't send: " + (err.code || err.message), false);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Send";
+  }
+});
+
+/* ---------- Block / unblock ---------- */
+$("blockBtn").addEventListener("click", () => {
+  const u = selected();
+  if (!u) return;
+  const name = u.name || u.email;
+  const confirmBtn = $("blockConfirm");
+
+  if (u.blocked) {
+    $("blockTitle").textContent = "Unblock this account?";
+    $("blockText").textContent = name + " will be able to submit tasks and request withdrawals again.";
+    confirmBtn.textContent = "Unblock";
+    confirmBtn.className = "btn green";
+  } else {
+    $("blockTitle").textContent = "Block this account?";
+    $("blockText").textContent = name + " will no longer be able to submit tasks or request withdrawals. They can still log in and see their balance.";
+    confirmBtn.textContent = "Block account";
+    confirmBtn.className = "btn red";
+  }
+  $("blockSheet").classList.add("show");
+});
+
+$("blockConfirm").addEventListener("click", async () => {
+  const u = selected();
+  if (!u) return;
+
+  const block = !u.blocked;
+  const btn = $("blockConfirm");
+  const label = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = "Working...";
+
+  try {
+    const batch = writeBatch(db);
+    batch.update(doc(db, "users", u.id), { blocked: block });
+    batch.set(doc(collection(db, "notifications")), {
+      userId: u.id,
+      icon: block ? "🚫" : "✅",
+      title: block ? "Account restricted" : "Account restored",
+      text: block
+        ? "Your account has been restricted. Please contact support."
+        : "Your account is active again. You can submit tasks and request withdrawals.",
+      createdAt: serverTimestamp()
+    });
+    await batch.commit();
+
+    closeTop("blockSheet");
+    showToast(block ? "Account blocked" : "Account unblocked");
+  } catch (err) {
+    console.error(err);
+    showToast("Couldn't update: " + (err.code || "error"));
+  } finally {
+    btn.disabled = false;
+    btn.textContent = label;
+  }
+});
+</script>
+</body>
+</html>

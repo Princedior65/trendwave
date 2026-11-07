@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Admin Dashboard | Trend Wave</title>
+<style>
+:root{--bg:#07172f;--card:#102b4c;--card-border:#234467;--gold:#f5c76b;--muted:#aab6ca}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:Arial,sans-serif;background:var(--bg);color:#fff;min-height:100vh}
+
+header{background:var(--card);padding:20px;border-bottom:1px solid var(--gold)}
+header h2{color:var(--gold)}
+header p{color:#bbb;margin-top:5px;font-size:13px}
+
+.container{padding:20px;max-width:850px;margin:auto}
+.welcome{margin-bottom:22px}
+.welcome h3{font-size:22px;margin-bottom:7px}
+.welcome p{color:#aaa;font-size:14px;word-break:break-all}
+
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:25px}
+.stat{background:var(--card);padding:18px;border-radius:12px;border:1px solid var(--card-border)}
+.stat p{color:#aaa;font-size:13px}
+.stat h2{color:var(--gold);margin-top:10px;font-size:25px}
+.stat.alert{border-color:var(--gold)}
+
+.section-title{color:var(--gold);margin-bottom:13px}
+.menu{display:grid;gap:12px}
+.menu button{width:100%;padding:18px;background:var(--card);color:#fff;border:1px solid var(--card-border);border-radius:10px;text-align:left;font-size:15px;cursor:pointer}
+.menu button span{color:var(--gold);float:right}
+.menu button:active{background:#193c62}
+
+.logout{width:100%;padding:15px;margin-top:25px;background:#a83232;color:#fff;border:none;border-radius:8px;font-size:15px;cursor:pointer}
+.logout:active{background:#8a2727}
+button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+
+.error{display:none;background:#3a1a1a;border:1px solid #a83232;color:#ffb4b4;padding:12px 14px;border-radius:8px;font-size:13px;margin-bottom:18px}
+
+/* ---------- PREMIUM LOADER ---------- */
+#loader{position:fixed;inset:0;background:radial-gradient(circle at 50% 40%,#12305a 0%,var(--bg) 65%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:30px;z-index:200;padding:24px;transition:opacity .5s ease,visibility .5s ease}
+#loader.hide{opacity:0;visibility:hidden}
+.loader-ring{position:relative;width:110px;height:110px;display:flex;align-items:center;justify-content:center}
+.loader-ring::before,.loader-ring::after{content:"";position:absolute;inset:0;border-radius:50%;border:2px solid transparent}
+.loader-ring::before{border-top-color:var(--gold);border-right-color:var(--gold);animation:spin 1.1s linear infinite}
+.loader-ring::after{inset:10px;border-bottom-color:rgba(245,199,107,.5);border-left-color:rgba(245,199,107,.5);animation:spin 1.8s linear infinite reverse}
+.loader-mark{color:var(--gold);font-size:38px;font-weight:bold;animation:pulse 1.6s ease-in-out infinite}
+.loader-brand{text-align:center}
+.loader-brand h1{font-size:20px;letter-spacing:4px;background:linear-gradient(90deg,#b88a1a,#f5c76b,#fff2c4,#f5c76b,#b88a1a);background-size:200% auto;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:shine 2.2s linear infinite;margin-bottom:8px}
+.loader-brand p{color:var(--muted);font-size:12px;letter-spacing:1px}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(.88);opacity:.7}}
+@keyframes shine{to{background-position:200% center}}
+
+/* Access denied screen (shown inside the loader) */
+#denied{display:none;text-align:center;max-width:420px}
+#denied h3{color:var(--gold);font-size:20px}
+#denied p{color:#bbb;font-size:13px;margin-top:10px;line-height:1.5;word-break:break-word}
+#denied .uid{color:var(--muted);font-size:12px;word-break:break-all}
+#denied button{max-width:260px;margin:20px auto 0;display:block;background:var(--card);border:1px solid var(--gold);color:var(--gold);padding:15px;border-radius:8px;font-size:15px;width:100%;cursor:pointer}
+#loader.denied .loader-ring,#loader.denied .loader-brand{display:none}
+#loader.denied #denied{display:block}
+
+#app{visibility:hidden}
+</style>
+</head>
+<body>
+
+<!-- PREMIUM LOADER -->
+<div id="loader">
+  <div class="loader-ring"><div class="loader-mark">〆</div></div>
+  <div class="loader-brand">
+    <h1>TREND WAVE</h1>
+    <p>Preparing your dashboard...</p>
+  </div>
+  <div id="denied">
+    <h3 id="deniedTitle"></h3>
+    <p id="deniedText"></p>
+    <p class="uid" id="deniedUid"></p>
+    <button type="button" id="deniedBtn">Go to login</button>
+  </div>
+</div>
+
+<div id="app">
+  <header>
+    <h2>ᴛʀᴇɴᴅ ᴡᴀᴠᴇ 〆</h2>
+    <p>Administrator Panel</p>
+  </header>
+
+  <div class="container">
+    <div class="welcome">
+      <h3>Welcome, Admin 👑</h3>
+      <p id="adminEmail">Manage your Trend Wave earning platform.</p>
+    </div>
+
+    <div id="errorBox" class="error"></div>
+
+    <div class="stats">
+      <div class="stat"><p>Total Users</p><h2 id="statUsers">–</h2></div>
+      <div class="stat"><p>Available Tasks</p><h2 id="statTasks">–</h2></div>
+      <div class="stat" id="cardSubmissions"><p>Pending Submissions</p><h2 id="statSubmissions">–</h2></div>
+      <div class="stat" id="cardWithdrawals"><p>Withdrawal Requests</p><h2 id="statWithdrawals">–</h2></div>
+    </div>
+
+    <h3 class="section-title">Management</h3>
+
+    <div class="menu">
+      <button data-page="add-task.html">➕ Add New Task <span>›</span></button>
+      <button data-page="manage-tasks.html">📋 Manage Tasks <span>›</span></button>
+      <button data-page="submissions.html">📥 Task Submissions <span>›</span></button>
+      <button data-page="users.html">👥 Manage Users <span>›</span></button>
+      <button data-page="withdrawals.html">💰 Withdrawals <span>›</span></button>
+      <button data-page="settings.html">⚙️ Settings <span>›</span></button>
+      <button data-page="dashboard.html">🏠 User Dashboard <span>›</span></button>
+    </div>
+
+    <button class="logout" id="logoutBtn">Logout</button>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, collection, query, where, getCountFromServer } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyB3iNjyk71CM0w0TwsI0T4EKlgku4oaUOE",
+  authDomain: "trend-wave-d5a7b.firebaseapp.com",
+  projectId: "trend-wave-d5a7b",
+  storageBucket: "trend-wave-d5a7b.firebasestorage.app",
+  messagingSenderId: "403305458793",
+  appId: "1:403305458793:web:9df8a535500c403ed0c6f8",
+  measurementId: "G-1ZX8YNF81Y"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const LOGIN_PAGE = "login.html";
+const ADMIN_UID = "DEKlRtipYTMIaBNkSzMtrGNNFXr2";
+const $ = (id) => document.getElementById(id);
+
+let refreshTimer = null;
+
+function showError(msg) {
+  const box = $("errorBox");
+  box.textContent = msg;
+  box.style.display = "block";
+}
+
+function clearError() {
+  $("errorBox").style.display = "none";
+}
+
+function goToLogin() {
+  location.replace(LOGIN_PAGE);
+}
+
+/* ---------- Access denied screen ---------- */
+function denyAccess(title, detail, uid) {
+  $("deniedTitle").textContent = title;
+  $("deniedText").textContent = detail;
+  $("deniedUid").textContent = uid ? "UID: " + uid : "";
+  $("loader").classList.add("denied");
+}
+
+$("deniedBtn").addEventListener("click", async () => {
+  try { await signOut(auth); } finally { goToLogin(); }
+});
+
+/* ---------- Access control ---------- */
+onAuthStateChanged(auth, (user) => {
+  if (!user) {
+    return denyAccess(
+      "Not signed in",
+      "No active session was found on this page. Log in from the same site this dashboard is hosted on."
+    );
+  }
+
+  if (user.uid !== ADMIN_UID) {
+    return denyAccess(
+      "Not an admin",
+      "This account isn't authorised to open the admin panel. Log in with the admin account.",
+      user.uid
+    );
+  }
+
+  $("adminEmail").textContent = user.email
+    ? "Signed in as " + user.email
+    : "Manage your Trend Wave earning platform.";
+
+  $("app").style.visibility = "visible";
+  loadStats();
+  refreshTimer = setInterval(loadStats, 60000);
+
+  setTimeout(() => $("loader").classList.add("hide"), 900);
+});
+
+/* ---------- Stats ---------- */
+async function count(q) {
+  const snap = await getCountFromServer(q);
+  return snap.data().count;
+}
+
+async function loadStats() {
+  const jobs = [
+    ["statUsers", collection(db, "users")],
+    ["statTasks", collection(db, "tasks")],
+    ["statSubmissions", query(collection(db, "submissions"), where("status", "==", "pending"))],
+    ["statWithdrawals", query(collection(db, "withdrawals"), where("status", "==", "pending"))]
+  ];
+
+  const results = await Promise.allSettled(jobs.map(([, q]) => count(q)));
+  const failures = [];
+
+  results.forEach((res, i) => {
+    const el = $(jobs[i][0]);
+    if (res.status === "fulfilled") {
+      el.textContent = res.value.toLocaleString();
+    } else {
+      el.textContent = "–";
+      const label = jobs[i][0].replace("stat", "");
+      const code = (res.reason && (res.reason.code || res.reason.message)) || "unknown error";
+      failures.push(label + ": " + code);
+      console.error(jobs[i][0], res.reason);
+    }
+  });
+
+  const num = (id) => Number($(id).textContent.replace(/,/g, "")) || 0;
+  $("cardSubmissions").classList.toggle("alert", num("statSubmissions") > 0);
+  $("cardWithdrawals").classList.toggle("alert", num("statWithdrawals") > 0);
+
+  if (failures.length) {
+    showError("Couldn't load: " + failures.join(" | "));
+  } else {
+    clearError();
+  }
+}
+
+/* ---------- Navigation ---------- */
+document.querySelectorAll(".menu button").forEach((btn) => {
+  btn.addEventListener("click", () => { location.href = btn.dataset.page; });
+});
+
+/* ---------- Logout ---------- */
+$("logoutBtn").addEventListener("click", async () => {
+  clearInterval(refreshTimer);
+  try {
+    await signOut(auth);
+  } finally {
+    goToLogin();
+  }
+});
+</script>
+</body>
+</html>

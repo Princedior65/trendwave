@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Manage Tasks | Trend Wave</title>
+<style>
+:root{--bg:#07172f;--card:#102b4c;--card-border:#234467;--gold:#f5c76b;--muted:#aab6ca;--danger:#ff6b6b}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:Arial,sans-serif;background:var(--bg);color:#fff;min-height:100vh}
+
+header{background:var(--card);padding:16px 20px;border-bottom:1px solid var(--gold);display:flex;align-items:center;gap:14px}
+.back{width:40px;height:40px;border-radius:50%;background:var(--bg);border:1px solid var(--card-border);color:#fff;font-size:20px;cursor:pointer;flex-shrink:0}
+header h2{color:var(--gold);font-size:18px}
+header p{color:#bbb;margin-top:3px;font-size:12px}
+.add-link{margin-left:auto;background:var(--gold);color:var(--bg);border:none;border-radius:20px;padding:9px 14px;font-size:13px;font-weight:bold;cursor:pointer;white-space:nowrap}
+
+.container{padding:20px;max-width:700px;margin:auto;padding-bottom:calc(40px + env(safe-area-inset-bottom))}
+
+.filters{display:flex;gap:8px;margin-bottom:18px}
+.filters button{flex:1;padding:10px;background:var(--card);border:1px solid var(--card-border);color:var(--muted);border-radius:20px;font-size:13px;cursor:pointer}
+.filters button.active{background:var(--gold);color:var(--bg);border-color:var(--gold);font-weight:bold}
+
+.task{background:var(--card);border:1px solid var(--card-border);border-radius:14px;padding:16px;margin-bottom:12px}
+.task.hidden-task{opacity:.7}
+.task-top{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.t-icon{width:42px;height:42px;border-radius:12px;background:rgba(245,199,107,.12);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.t-main{flex:1;min-width:0}
+.task h4{font-size:15px;margin-bottom:4px;word-break:break-word}
+.t-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;color:var(--muted);font-size:12px}
+.pill{padding:2px 9px;border-radius:10px;font-size:11px;font-weight:bold}
+.pill.active{background:rgba(112,230,160,.15);color:#70e6a0}
+.pill.hidden{background:rgba(170,182,202,.15);color:var(--muted)}
+.t-reward{color:var(--gold);font-weight:bold;font-size:15px;white-space:nowrap}
+.t-text{color:#c4cfe0;font-size:13px;line-height:1.5;margin-bottom:12px;white-space:pre-wrap;word-break:break-word;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.actions{display:flex;gap:8px}
+.actions button{flex:1;padding:10px 6px;background:var(--bg);border:1px solid var(--card-border);color:#fff;border-radius:8px;font-size:13px;cursor:pointer}
+.actions .del{color:var(--danger);border-color:rgba(255,107,107,.5)}
+
+.empty{background:var(--card);border:1px dashed var(--card-border);border-radius:14px;padding:40px 20px;text-align:center;color:var(--muted);font-size:14px;line-height:1.6}
+.empty .big{font-size:38px;display:block;margin-bottom:12px}
+
+/* Edit / delete sheets */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);opacity:0;pointer-events:none;transition:opacity .25s;z-index:60}
+.overlay.show{opacity:1;pointer-events:auto}
+.sheet{position:fixed;left:50%;bottom:0;transform:translate(-50%,100%);width:100%;max-width:560px;max-height:90vh;overflow-y:auto;background:#0a1f3d;border:1px solid var(--card-border);border-radius:20px 20px 0 0;padding:20px 20px calc(24px + env(safe-area-inset-bottom));transition:transform .3s ease;z-index:70}
+.sheet.show{transform:translate(-50%,0)}
+.sheet h3{font-size:18px;margin-bottom:16px}
+.sheet p{color:var(--muted);font-size:14px;line-height:1.5;margin-bottom:18px}
+
+.field{margin-bottom:16px}
+.field label{display:block;font-size:14px;margin-bottom:8px}
+.field input,.field select,.field textarea{width:100%;padding:13px;background:var(--card);border:1px solid #34516f;border-radius:8px;color:#fff;font-family:inherit;font-size:15px;outline:none}
+.field textarea{min-height:100px;resize:vertical;line-height:1.5}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--gold)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+.btn{width:100%;padding:14px;background:var(--gold);color:var(--bg);border:none;border-radius:8px;font-weight:bold;font-size:15px;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--gold);border:1px solid var(--gold);margin-top:10px}
+.btn.red{background:var(--danger);color:#fff}
+.btn:disabled{opacity:.6;cursor:not-allowed}
+button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+#editMsg{margin-top:12px;text-align:center;font-size:13px;min-height:18px}
+
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translate(-50%,20px);background:var(--card);border:1px solid var(--gold);color:#fff;padding:12px 20px;border-radius:8px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;z-index:90;white-space:nowrap}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* Loader */
+#loader{position:fixed;inset:0;background:radial-gradient(circle at 50% 40%,#12305a 0%,var(--bg) 65%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:30px;z-index:200;padding:24px;transition:opacity .5s ease,visibility .5s ease}
+#loader.hide{opacity:0;visibility:hidden}
+.loader-ring{position:relative;width:110px;height:110px;display:flex;align-items:center;justify-content:center}
+.loader-ring::before,.loader-ring::after{content:"";position:absolute;inset:0;border-radius:50%;border:2px solid transparent}
+.loader-ring::before{border-top-color:var(--gold);border-right-color:var(--gold);animation:spin 1.1s linear infinite}
+.loader-ring::after{inset:10px;border-bottom-color:rgba(245,199,107,.5);border-left-color:rgba(245,199,107,.5);animation:spin 1.8s linear infinite reverse}
+.loader-mark{color:var(--gold);font-size:38px;font-weight:bold;animation:pulse 1.6s ease-in-out infinite}
+.loader-brand{text-align:center}
+.loader-brand h1{font-size:20px;letter-spacing:4px;background:linear-gradient(90deg,#b88a1a,#f5c76b,#fff2c4,#f5c76b,#b88a1a);background-size:200% auto;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:shine 2.2s linear infinite;margin-bottom:8px}
+.loader-brand p{color:var(--muted);font-size:12px;letter-spacing:1px}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(.88);opacity:.7}}
+@keyframes shine{to{background-position:200% center}}
+#denied{display:none;text-align:center;max-width:420px}
+#denied h3{color:var(--gold);font-size:20px}
+#denied p{color:#bbb;font-size:13px;margin-top:10px;line-height:1.5}
+#denied button{max-width:260px;margin:20px auto 0;display:block;background:var(--card);border:1px solid var(--gold);color:var(--gold);padding:15px;border-radius:8px;font-size:15px;width:100%;cursor:pointer}
+#loader.denied .loader-ring,#loader.denied .loader-brand{display:none}
+#loader.denied #denied{display:block}
+#app{visibility:hidden}
+</style>
+</head>
+<body>
+
+<div id="loader">
+  <div class="loader-ring"><div class="loader-mark">〆</div></div>
+  <div class="loader-brand">
+    <h1>TREND WAVE</h1>
+    <p>Preparing your dashboard...</p>
+  </div>
+  <div id="denied">
+    <h3 id="deniedTitle"></h3>
+    <p id="deniedText"></p>
+    <button type="button" id="deniedBtn">Go to login</button>
+  </div>
+</div>
+
+<div id="app">
+  <header>
+    <button class="back" id="backBtn" aria-label="Back">‹</button>
+    <div>
+      <h2>Manage Tasks</h2>
+      <p id="summary">Administrator Panel</p>
+    </div>
+    <button class="add-link" id="addBtn">+ New</button>
+  </header>
+
+  <div class="container">
+    <div class="filters" id="filters">
+      <button data-filter="all" class="active">All</button>
+      <button data-filter="active">Active</button>
+      <button data-filter="hidden">Hidden</button>
+    </div>
+
+    <div id="taskList"></div>
+
+    <div class="empty" id="empty" style="display:none">
+      <span class="big">📋</span>
+      <span id="emptyText">No tasks yet.</span>
+    </div>
+  </div>
+</div>
+
+<!-- Edit sheet -->
+<div class="overlay" id="overlay"></div>
+
+<div class="sheet" id="editSheet">
+  <h3>Edit task</h3>
+  <form id="editForm" novalidate>
+    <div class="field">
+      <label for="eTitle">Task title</label>
+      <input type="text" id="eTitle" maxlength="80">
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label for="eCategory">Category</label>
+        <select id="eCategory">
+          <option value="social">Social media</option>
+          <option value="video">Watch video</option>
+          <option value="app">Install app</option>
+          <option value="survey">Survey</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="eReward">Reward (₦)</label>
+        <input type="number" id="eReward" min="1" step="any" inputmode="decimal">
+      </div>
+    </div>
+    <div class="field">
+      <label for="eLink">Task link (optional)</label>
+      <input type="url" id="eLink" placeholder="https://...">
+    </div>
+    <div class="field">
+      <label for="eInstructions">Instructions</label>
+      <textarea id="eInstructions" maxlength="1000"></textarea>
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label for="eProof">Proof needed</label>
+        <select id="eProof">
+          <option value="screenshot">Screenshot</option>
+          <option value="username">Username</option>
+          <option value="none">None</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="eStatus">Status</label>
+        <select id="eStatus">
+          <option value="active">Active</option>
+          <option value="hidden">Hidden</option>
+        </select>
+      </div>
+    </div>
+    <button type="submit" class="btn" id="editSave">Save Changes</button>
+    <button type="button" class="btn ghost" id="editCancel">Cancel</button>
+    <div id="editMsg" role="status" aria-live="polite"></div>
+  </form>
+</div>
+
+<!-- Delete sheet -->
+<div class="sheet" id="deleteSheet">
+  <h3>Delete this task?</h3>
+  <p id="deleteText"></p>
+  <button type="button" class="btn red" id="deleteConfirm">Delete task</button>
+  <button type="button" class="btn ghost" id="deleteCancel">Cancel</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, collection, doc, onSnapshot, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyB3iNjyk71CM0w0TwsI0T4EKlgku4oaUOE",
+  authDomain: "trend-wave-d5a7b.firebaseapp.com",
+  projectId: "trend-wave-d5a7b",
+  storageBucket: "trend-wave-d5a7b.firebasestorage.app",
+  messagingSenderId: "403305458793",
+  appId: "1:403305458793:web:9df8a535500c403ed0c6f8",
+  measurementId: "G-1ZX8YNF81Y"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const ADMIN_UID = "DEKlRtipYTMIaBNkSzMtrGNNFXr2";
+const $ = (id) => document.getElementById(id);
+
+const CATEGORIES = {
+  social: { icon: "📱", label: "Social media" },
+  video: { icon: "🎬", label: "Watch video" },
+  app: { icon: "📲", label: "Install app" },
+  survey: { icon: "📝", label: "Survey" },
+  other: { icon: "⭐", label: "Other" }
+};
+
+let allTasks = [];
+let filter = "all";
+let editingId = null;
+let deletingId = null;
+let unsubscribe = null;
+
+const naira = (n) => "₦" + Number(n || 0).toLocaleString("en-NG", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+
+let toastTimer;
+function showToast(text) {
+  const t = $("toast");
+  t.textContent = text;
+  t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("show"), 2200);
+}
+
+/* ---------- Access control ---------- */
+function denyAccess(title, detail) {
+  $("deniedTitle").textContent = title;
+  $("deniedText").textContent = detail;
+  $("loader").classList.add("denied");
+}
+
+$("deniedBtn").addEventListener("click", async () => {
+  try { await signOut(auth); } finally { location.replace("login.html"); }
+});
+$("backBtn").addEventListener("click", () => { location.href = "admin-dashboard.html"; });
+$("addBtn").addEventListener("click", () => { location.href = "add-task.html"; });
+
+onAuthStateChanged(auth, (user) => {
+  if (!user) return denyAccess("Not signed in", "Log in from the same site this page is hosted on.");
+  if (user.uid !== ADMIN_UID) return denyAccess("Not an admin", "This account isn't authorised to manage tasks.");
+
+  $("app").style.visibility = "visible";
+  startListening();
+  setTimeout(() => $("loader").classList.add("hide"), 900);
+});
+
+/* ---------- Load tasks (live) ---------- */
+function startListening() {
+  if (unsubscribe) unsubscribe();
+
+  unsubscribe = onSnapshot(
+    collection(db, "tasks"),
+    (snap) => {
+      allTasks = snap.docs.map((d) => Object.assign({ id: d.id }, d.data()));
+      const time = (t) => (t.createdAt && t.createdAt.toMillis ? t.createdAt.toMillis() : Date.now());
+      allTasks.sort((a, b) => time(b) - time(a));
+      render();
+    },
+    (err) => {
+      console.error(err);
+      showToast("Couldn't load tasks: " + (err.code || "error"));
+    }
+  );
+}
+
+/* ---------- Render ---------- */
+function render() {
+  const active = allTasks.filter((t) => t.status === "active").length;
+  $("summary").textContent = allTasks.length + " total · " + active + " active";
+
+  const shown = allTasks.filter((t) => filter === "all" || (filter === "active" ? t.status === "active" : t.status !== "active"));
+
+  const list = $("taskList");
+  list.innerHTML = "";
+
+  $("empty").style.display = shown.length ? "none" : "block";
+  $("emptyText").textContent = allTasks.length
+    ? "No " + filter + " tasks."
+    : "No tasks yet. Tap + New to add your first one.";
+
+  shown.forEach((t) => {
+    const isActive = t.status === "active";
+    const cat = CATEGORIES[t.category] || CATEGORIES.other;
+
+    const card = document.createElement("div");
+    card.className = "task" + (isActive ? "" : " hidden-task");
+
+    const top = document.createElement("div");
+    top.className = "task-top";
+
+    const icon = document.createElement("div");
+    icon.className = "t-icon";
+    icon.textContent = cat.icon;
+
+    const main = document.createElement("div");
+    main.className = "t-main";
+    const title = document.createElement("h4");
+    title.textContent = t.title || "Untitled task";
+    const meta = document.createElement("div");
+    meta.className = "t-meta";
+    const pill = document.createElement("span");
+    pill.className = "pill " + (isActive ? "active" : "hidden");
+    pill.textContent = isActive ? "Active" : "Hidden";
+    const catText = document.createElement("span");
+    catText.textContent = cat.label;
+    meta.append(pill, catText);
+    main.append(title, meta);
+
+    const reward = document.createElement("div");
+    reward.className = "t-reward";
+    reward.textContent = naira(t.reward);
+
+    top.append(icon, main, reward);
+    card.appendChild(top);
+
+    if (t.instructions) {
+      const text = document.createElement("div");
+      text.className = "t-text";
+      text.textContent = t.instructions;
+      card.appendChild(text);
+    }
+
+    const actions = document.createElement("div");
+    actions.className = "actions";
+
+    const toggle = document.createElement("button");
+    toggle.textContent = isActive ? "Hide" : "Show";
+    toggle.addEventListener("click", () => toggleStatus(t));
+
+    const edit = document.createElement("button");
+    edit.textContent = "Edit";
+    edit.addEventListener("click", () => openEdit(t));
+
+    const del = document.createElement("button");
+    del.className = "del";
+    del.textContent = "Delete";
+    del.addEventListener("click", () => openDelete(t));
+
+    actions.append(toggle, edit, del);
+    card.appendChild(actions);
+    list.appendChild(card);
+  });
+}
+
+document.querySelectorAll("#filters button").forEach((b) => {
+  b.addEventListener("click", () => {
+    filter = b.dataset.filter;
+    document.querySelectorAll("#filters button").forEach((x) => x.classList.toggle("active", x === b));
+    render();
+  });
+});
+
+/* ---------- Hide / show ---------- */
+async function toggleStatus(t) {
+  const next = t.status === "active" ? "hidden" : "active";
+  try {
+    await updateDoc(doc(db, "tasks", t.id), { status: next });
+    showToast(next === "active" ? "Task is now active" : "Task hidden");
+  } catch (err) {
+    console.error(err);
+    showToast("Couldn't update: " + (err.code || "error"));
+  }
+}
+
+/* ---------- Sheets ---------- */
+function closeSheets() {
+  $("overlay").classList.remove("show");
+  $("editSheet").classList.remove("show");
+  $("deleteSheet").classList.remove("show");
+  editingId = null;
+  deletingId = null;
+}
+
+$("overlay").addEventListener("click", closeSheets);
+$("editCancel").addEventListener("click", closeSheets);
+$("deleteCancel").addEventListener("click", closeSheets);
+
+/* ---------- Edit ---------- */
+function openEdit(t) {
+  editingId = t.id;
+  $("eTitle").value = t.title || "";
+  $("eCategory").value = CATEGORIES[t.category] ? t.category : "other";
+  $("eReward").value = t.reward || "";
+  $("eLink").value = t.link || "";
+  $("eInstructions").value = t.instructions || "";
+  $("eProof").value = t.proof || "screenshot";
+  $("eStatus").value = t.status === "active" ? "active" : "hidden";
+  $("editMsg").textContent = "";
+  $("editSheet").scrollTop = 0;
+  $("overlay").classList.add("show");
+  $("editSheet").classList.add("show");
+}
+
+function setEditMsg(text, ok) {
+  const m = $("editMsg");
+  m.style.color = ok ? "#70e6a0" : "#ff7777";
+  m.textContent = text;
+}
+
+$("editForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  if (!editingId) return;
+
+  const title = $("eTitle").value.trim();
+  const reward = parseFloat($("eReward").value);
+  const link = $("eLink").value.trim();
+  const instructions = $("eInstructions").value.trim();
+
+  if (title.length < 3) return setEditMsg("Enter a task title.", false);
+  if (!(reward > 0)) return setEditMsg("Enter a reward greater than 0.", false);
+  if (link && !/^https?:\/\/.+/i.test(link)) return setEditMsg("The link must start with http:// or https://", false);
+  if (instructions.length < 5) return setEditMsg("Write the instructions for this task.", false);
+
+  const btn = $("editSave");
+  btn.disabled = true;
+  btn.textContent = "Saving...";
+
+  try {
+    await updateDoc(doc(db, "tasks", editingId), {
+      title,
+      category: $("eCategory").value,
+      reward,
+      link,
+      instructions,
+      proof: $("eProof").value,
+      status: $("eStatus").value
+    });
+    closeSheets();
+    showToast("Task updated");
+  } catch (err) {
+    console.error(err);
+    setEditMsg("Couldn't save: " + (err.code || err.message), false);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Save Changes";
+  }
+});
+
+/* ---------- Delete ---------- */
+function openDelete(t) {
+  deletingId = t.id;
+  $("deleteText").textContent = "\u201C" + (t.title || "Untitled task") + "\u201D will be removed for good. You can hide it instead if you might need it again.";
+  $("overlay").classList.add("show");
+  $("deleteSheet").classList.add("show");
+}
+
+$("deleteConfirm").addEventListener("click", async () => {
+  if (!deletingId) return;
+
+  const btn = $("deleteConfirm");
+  btn.disabled = true;
+  btn.textContent = "Deleting...";
+
+  try {
+    await deleteDoc(doc(db, "tasks", deletingId));
+    closeSheets();
+    showToast("Task deleted");
+  } catch (err) {
+    console.error(err);
+    showToast("Couldn't delete: " + (err.code || "error"));
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Delete task";
+  }
+});
+</script>
+</body>
+</html>

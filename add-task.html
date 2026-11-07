@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Add Task | Trend Wave</title>
+<style>
+:root{--bg:#07172f;--card:#102b4c;--card-border:#234467;--gold:#f5c76b;--muted:#aab6ca}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:Arial,sans-serif;background:var(--bg);color:#fff;min-height:100vh}
+
+header{background:var(--card);padding:16px 20px;border-bottom:1px solid var(--gold);display:flex;align-items:center;gap:14px}
+.back{width:40px;height:40px;border-radius:50%;background:var(--bg);border:1px solid var(--card-border);color:#fff;font-size:20px;cursor:pointer;flex-shrink:0}
+header h2{color:var(--gold);font-size:18px}
+header p{color:#bbb;margin-top:3px;font-size:12px}
+
+.container{padding:20px;max-width:600px;margin:auto;padding-bottom:calc(40px + env(safe-area-inset-bottom))}
+.page-sub{color:var(--muted);font-size:14px;line-height:1.5;margin-bottom:22px}
+
+.field{margin-bottom:18px}
+.field label{display:block;font-size:14px;margin-bottom:8px}
+.field small{display:block;color:var(--muted);font-size:12px;margin-top:6px;line-height:1.4}
+.field input,.field select,.field textarea{width:100%;padding:14px;background:var(--card);border:1px solid #34516f;border-radius:8px;color:#fff;font-family:inherit;font-size:15px;outline:none}
+.field textarea{min-height:120px;resize:vertical;line-height:1.5}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--gold)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+.btn{width:100%;padding:15px;background:var(--gold);color:var(--bg);border:none;border-radius:8px;font-weight:bold;font-size:15px;cursor:pointer;margin-top:6px}
+.btn:disabled{opacity:.6;cursor:not-allowed}
+button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+
+#message{margin-top:16px;text-align:center;font-size:13px;line-height:1.5;min-height:20px}
+
+/* Loader (same as dashboards) */
+#loader{position:fixed;inset:0;background:radial-gradient(circle at 50% 40%,#12305a 0%,var(--bg) 65%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:30px;z-index:200;padding:24px;transition:opacity .5s ease,visibility .5s ease}
+#loader.hide{opacity:0;visibility:hidden}
+.loader-ring{position:relative;width:110px;height:110px;display:flex;align-items:center;justify-content:center}
+.loader-ring::before,.loader-ring::after{content:"";position:absolute;inset:0;border-radius:50%;border:2px solid transparent}
+.loader-ring::before{border-top-color:var(--gold);border-right-color:var(--gold);animation:spin 1.1s linear infinite}
+.loader-ring::after{inset:10px;border-bottom-color:rgba(245,199,107,.5);border-left-color:rgba(245,199,107,.5);animation:spin 1.8s linear infinite reverse}
+.loader-mark{color:var(--gold);font-size:38px;font-weight:bold;animation:pulse 1.6s ease-in-out infinite}
+.loader-brand{text-align:center}
+.loader-brand h1{font-size:20px;letter-spacing:4px;background:linear-gradient(90deg,#b88a1a,#f5c76b,#fff2c4,#f5c76b,#b88a1a);background-size:200% auto;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:shine 2.2s linear infinite;margin-bottom:8px}
+.loader-brand p{color:var(--muted);font-size:12px;letter-spacing:1px}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(.88);opacity:.7}}
+@keyframes shine{to{background-position:200% center}}
+#denied{display:none;text-align:center;max-width:420px}
+#denied h3{color:var(--gold);font-size:20px}
+#denied p{color:#bbb;font-size:13px;margin-top:10px;line-height:1.5}
+#denied button{max-width:260px;margin:20px auto 0;display:block;background:var(--card);border:1px solid var(--gold);color:var(--gold);padding:15px;border-radius:8px;font-size:15px;width:100%;cursor:pointer}
+#loader.denied .loader-ring,#loader.denied .loader-brand{display:none}
+#loader.denied #denied{display:block}
+#app{visibility:hidden}
+</style>
+</head>
+<body>
+
+<div id="loader">
+  <div class="loader-ring"><div class="loader-mark">〆</div></div>
+  <div class="loader-brand">
+    <h1>TREND WAVE</h1>
+    <p>Preparing your dashboard...</p>
+  </div>
+  <div id="denied">
+    <h3 id="deniedTitle"></h3>
+    <p id="deniedText"></p>
+    <button type="button" id="deniedBtn">Go to login</button>
+  </div>
+</div>
+
+<div id="app">
+  <header>
+    <button class="back" id="backBtn" aria-label="Back">‹</button>
+    <div>
+      <h2>Add New Task</h2>
+      <p>Administrator Panel</p>
+    </div>
+  </header>
+
+  <div class="container">
+    <p class="page-sub">Create a task for users to complete. It appears in their Task tab as soon as it's saved as active.</p>
+
+    <form id="taskForm" novalidate>
+      <div class="field">
+        <label for="title">Task title</label>
+        <input type="text" id="title" maxlength="80" placeholder="e.g. Follow our Instagram page">
+      </div>
+
+      <div class="row2">
+        <div class="field">
+          <label for="category">Category</label>
+          <select id="category">
+            <option value="social">Social media</option>
+            <option value="video">Watch video</option>
+            <option value="app">Install app</option>
+            <option value="survey">Survey</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="reward">Reward (₦)</label>
+          <input type="number" id="reward" min="1" step="any" inputmode="decimal" placeholder="e.g. 50">
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="link">Task link (optional)</label>
+        <input type="url" id="link" placeholder="https://...">
+        <small>Where users go to do the task.</small>
+      </div>
+
+      <div class="field">
+        <label for="instructions">Instructions</label>
+        <textarea id="instructions" maxlength="1000" placeholder="Tell users exactly what to do."></textarea>
+      </div>
+
+      <div class="row2">
+        <div class="field">
+          <label for="proof">Proof needed</label>
+          <select id="proof">
+            <option value="screenshot">Screenshot</option>
+            <option value="username">Username</option>
+            <option value="none">None</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="status">Status</label>
+          <select id="status">
+            <option value="active">Active</option>
+            <option value="hidden">Hidden</option>
+          </select>
+        </div>
+      </div>
+
+      <button type="submit" class="btn" id="saveBtn">Save Task</button>
+      <div id="message" role="status" aria-live="polite"></div>
+    </form>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyB3iNjyk71CM0w0TwsI0T4EKlgku4oaUOE",
+  authDomain: "trend-wave-d5a7b.firebaseapp.com",
+  projectId: "trend-wave-d5a7b",
+  storageBucket: "trend-wave-d5a7b.firebasestorage.app",
+  messagingSenderId: "403305458793",
+  appId: "1:403305458793:web:9df8a535500c403ed0c6f8",
+  measurementId: "G-1ZX8YNF81Y"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const ADMIN_UID = "DEKlRtipYTMIaBNkSzMtrGNNFXr2";
+const $ = (id) => document.getElementById(id);
+let adminUser = null;
+
+function denyAccess(title, detail) {
+  $("deniedTitle").textContent = title;
+  $("deniedText").textContent = detail;
+  $("loader").classList.add("denied");
+}
+
+$("deniedBtn").addEventListener("click", async () => {
+  try { await signOut(auth); } finally { location.replace("login.html"); }
+});
+
+$("backBtn").addEventListener("click", () => { location.href = "admin-dashboard.html"; });
+
+onAuthStateChanged(auth, (user) => {
+  if (!user) return denyAccess("Not signed in", "Log in from the same site this page is hosted on.");
+  if (user.uid !== ADMIN_UID) return denyAccess("Not an admin", "This account isn't authorised to add tasks.");
+
+  adminUser = user;
+  $("app").style.visibility = "visible";
+  setTimeout(() => $("loader").classList.add("hide"), 900);
+});
+
+function setMessage(text, ok) {
+  const m = $("message");
+  m.style.color = ok ? "#70e6a0" : "#ff7777";
+  m.textContent = text;
+}
+
+$("taskForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const title = $("title").value.trim();
+  const reward = parseFloat($("reward").value);
+  const link = $("link").value.trim();
+  const instructions = $("instructions").value.trim();
+
+  if (title.length < 3) return setMessage("Enter a task title.", false);
+  if (!(reward > 0)) return setMessage("Enter a reward greater than 0.", false);
+  if (link && !/^https?:\/\/.+/i.test(link)) return setMessage("The link must start with http:// or https://", false);
+  if (instructions.length < 5) return setMessage("Write the instructions for this task.", false);
+
+  const btn = $("saveBtn");
+  btn.disabled = true;
+  btn.textContent = "Saving...";
+  setMessage("", true);
+
+  try {
+    await addDoc(collection(db, "tasks"), {
+      title,
+      category: $("category").value,
+      reward,
+      link,
+      instructions,
+      proof: $("proof").value,
+      status: $("status").value,
+      createdBy: adminUser.uid,
+      createdAt: serverTimestamp()
+    });
+
+    $("taskForm").reset();
+    setMessage("Task saved!", true);
+  } catch (err) {
+    console.error(err);
+    setMessage("Couldn't save: " + (err.code || err.message), false);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Save Task";
+  }
+});
+</script>
+</body>
+</html>

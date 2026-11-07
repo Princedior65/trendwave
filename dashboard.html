@@ -1,0 +1,1770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Dashboard | Trend Wave</title>
+<style>
+:root{--bg:#07172f;--bg-2:#0a1f3d;--card:#102744;--card-border:#1d3b60;--gold:#f5c76b;--gold-deep:#d6a928;--text:#fff;--muted:#aab6ca;--danger:#ff6b6b;--nav-h:70px}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:Arial,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;justify-content:center}
+.app{width:100%;max-width:480px;min-height:100vh;padding:20px 20px calc(var(--nav-h) + 40px + env(safe-area-inset-bottom))}
+
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:26px}
+.logo{color:var(--gold);font-size:22px;font-weight:bold}
+.header-right{display:flex;align-items:center;gap:12px}
+.icon-btn{position:relative;width:42px;height:42px;border-radius:50%;background:var(--card);border:1px solid var(--card-border);color:var(--text);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.icon-btn svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.badge{position:absolute;top:-3px;right:-3px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--danger);color:#fff;font-size:11px;font-weight:bold;display:none;align-items:center;justify-content:center;border:2px solid var(--bg)}
+.badge.show{display:flex}
+.avatar{width:42px;height:42px;border-radius:50%;background:var(--gold);color:var(--bg);font-weight:bold;display:flex;align-items:center;justify-content:center;font-size:15px}
+
+.view{display:none;animation:fade .3s ease}
+.view.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.welcome{margin-bottom:22px}
+.welcome h2{font-size:22px;margin-bottom:6px}
+.welcome p{color:var(--muted);font-size:14px;word-break:break-all}
+.page-title{font-size:22px;margin-bottom:6px}
+.page-sub{color:var(--muted);font-size:14px;margin-bottom:22px;line-height:1.5}
+
+.balance{background:linear-gradient(135deg,#1a4274,#0c2547);padding:25px;border-radius:16px;border:1px solid var(--gold-deep);margin-bottom:16px;position:relative;overflow:hidden}
+.balance::after{content:"";position:absolute;right:-40px;top:-40px;width:140px;height:140px;border-radius:50%;background:radial-gradient(circle,rgba(245,199,107,.25),transparent 70%)}
+.balance p{color:#c4cfe0;font-size:14px;margin-bottom:10px}
+.balance h1{color:var(--gold);font-size:34px}
+
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:26px}
+.stat{background:var(--card);border:1px solid var(--card-border);padding:18px;border-radius:12px}
+.stat p{color:var(--muted);font-size:13px;margin-bottom:8px}
+.stat h2{color:var(--gold);font-size:24px}
+.section-title{font-size:16px;margin-bottom:14px}
+
+.community{display:flex;align-items:center;gap:14px;background:linear-gradient(135deg,#12427a,#0a2a52);border:1px solid var(--gold-deep);border-radius:16px;padding:16px;margin-bottom:22px;text-decoration:none;color:var(--text);position:relative;overflow:hidden;transition:transform .1s}
+.community:active{transform:scale(.98)}
+.community::after{content:"";position:absolute;right:-30px;bottom:-50px;width:130px;height:130px;border-radius:50%;background:radial-gradient(circle,rgba(41,169,235,.3),transparent 70%)}
+.community .tg{width:46px;height:46px;border-radius:50%;background:#29a9eb;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.community .tg svg{width:22px;height:22px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.community .info{flex:1;position:relative;z-index:1}
+.community h3{font-size:15px;margin-bottom:4px}
+.community p{color:#c4cfe0;font-size:12px;line-height:1.4}
+.community .join{background:var(--gold);color:var(--bg);font-weight:bold;font-size:13px;padding:9px 16px;border-radius:20px;position:relative;z-index:1}
+
+.activity-list{display:flex;flex-direction:column;gap:10px}
+.activity{background:var(--card);border:1px solid var(--card-border);border-radius:12px;padding:14px;display:flex;align-items:center;gap:12px}
+.activity .a-icon{width:40px;height:40px;border-radius:50%;background:rgba(245,199,107,.12);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.activity h4{font-size:14px;margin-bottom:3px}
+.activity small{color:var(--muted);font-size:12px}
+.activity-hint{color:var(--muted);font-size:12px;text-align:center;margin-top:14px;line-height:1.5}
+.wallet-actions{margin-top:4px;margin-bottom:26px}
+
+.empty{background:var(--card);border:1px dashed var(--card-border);border-radius:14px;padding:40px 20px;text-align:center;color:var(--muted);font-size:14px;line-height:1.6}
+.empty .big{font-size:38px;display:block;margin-bottom:12px}
+.task{background:var(--card);border:1px solid var(--card-border);border-radius:14px;padding:16px;margin-bottom:12px}
+.task-top{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.task .t-icon{width:42px;height:42px;border-radius:12px;background:rgba(245,199,107,.12);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.task .t-main{flex:1;min-width:0}
+.task h4{font-size:15px;margin-bottom:3px;word-break:break-word}
+.task .t-cat{color:var(--muted);font-size:12px}
+.task .t-reward{color:var(--gold);font-weight:bold;font-size:15px;white-space:nowrap}
+.task .t-text{color:#c4cfe0;font-size:13px;line-height:1.5;margin-bottom:14px;white-space:pre-wrap;word-break:break-word}
+.task .btn{display:block;text-align:center;text-decoration:none;padding:12px;font-size:14px}
+.task-actions{display:flex;gap:8px}
+.task-actions .btn{flex:1;width:auto}
+.btn.outline{background:transparent;color:var(--gold);border:1px solid var(--gold-deep)}
+.btn.muted{background:transparent;color:var(--muted);border:1px solid var(--card-border);cursor:default}
+.btn.ok{background:rgba(112,230,160,.15);color:#70e6a0;border:1px solid rgba(112,230,160,.4);cursor:default}
+.t-note{color:#ff9b9b;font-size:12px;line-height:1.5;margin-bottom:12px}
+.activity .amt{margin-left:auto;color:#70e6a0;font-weight:bold;font-size:14px;white-space:nowrap}
+.activity .amt.neg{color:var(--danger)}
+.activity .a-body{min-width:0}
+.proof-task{background:var(--card);border:1px solid var(--card-border);border-radius:14px;padding:16px;margin-bottom:20px}
+.proof-task h3{font-size:16px;margin-bottom:6px;word-break:break-word}
+.proof-task p{color:var(--gold);font-size:14px;font-weight:bold}
+#proofPreview{display:none;width:100%;max-height:260px;object-fit:contain;border-radius:10px;margin-top:12px;border:1px solid var(--card-border)}
+.nav-item .count{position:absolute;top:8px;left:calc(50% + 8px);min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:var(--danger);color:#fff;font-size:10px;font-weight:bold;display:none;align-items:center;justify-content:center}
+.nav-item .count.show{display:flex}
+  .activity .amt.pending{color:var(--gold)}
+.activity .amt.bad{color:var(--danger)}
+.wd-box{background:var(--card);border:1px solid var(--card-border);border-radius:14px;padding:16px;margin-bottom:20px}
+.wd-box p{color:var(--muted);font-size:13px;margin-bottom:6px}
+.wd-box h3{color:var(--gold);font-size:26px}
+.wd-bank{font-size:14px;line-height:1.5;word-break:break-word}
+
+.ref-box{background:var(--card);border:1px solid var(--card-border);border-radius:14px;padding:18px}
+.ref-box label{display:block;color:var(--muted);font-size:13px;margin-bottom:10px}
+.ref-link{background:var(--bg);border:1px solid #34516f;border-radius:8px;padding:12px;font-size:13px;color:var(--gold);word-break:break-all;margin-bottom:14px}
+
+.btn{width:100%;padding:14px;background:var(--gold);color:var(--bg);border:none;border-radius:8px;font-weight:bold;font-size:15px;cursor:pointer}
+.btn:disabled{opacity:.6;cursor:not-allowed}
+.btn.danger{background:transparent;color:var(--danger);border:1px solid var(--danger)}
+
+.profile-card{background:var(--card);border:1px solid var(--card-border);border-radius:14px;padding:24px 18px;text-align:center;margin-bottom:18px}
+.profile-card .avatar{width:72px;height:72px;font-size:26px;margin:0 auto 14px}
+.profile-card h3{font-size:18px;margin-bottom:6px}
+.profile-card p{color:var(--muted);font-size:14px;word-break:break-all}
+.avatar.has-pic{background-size:cover;background-position:center;background-repeat:no-repeat;font-size:0}
+
+.group-title{color:var(--muted);font-size:12px;letter-spacing:1px;text-transform:uppercase;margin:22px 4px 10px}
+.list{background:var(--card);border:1px solid var(--card-border);border-radius:14px;overflow:hidden}
+.row{width:100%;background:none;border:none;border-bottom:1px solid var(--card-border);color:var(--text);font-family:inherit;text-align:left;display:flex;align-items:center;gap:14px;padding:15px 16px;cursor:pointer}
+.row:last-child{border-bottom:none}
+.row:active{background:rgba(255,255,255,.04)}
+.r-icon{width:38px;height:38px;border-radius:10px;background:rgba(245,199,107,.12);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.r-text{flex:1;min-width:0}
+.r-text b{display:block;font-size:15px;margin-bottom:3px}
+.r-text small{color:var(--muted);font-size:12px}
+.chev{color:var(--muted);font-size:22px}
+.logout-wrap{margin-top:26px}
+#adminList{display:none;margin-bottom:6px;border-color:var(--gold-deep)}
+
+.subpage{position:fixed;top:0;bottom:0;left:0;right:0;margin:0 auto;max-width:480px;background:var(--bg);z-index:80;padding:20px 20px calc(30px + env(safe-area-inset-bottom));overflow-y:auto;transform:translateX(100%);visibility:hidden;transition:transform .3s ease,visibility .3s}
+.subpage.show{transform:translateX(0);visibility:visible}
+.sub-head{display:flex;align-items:center;gap:14px;margin-bottom:24px}
+.sub-head h2{font-size:20px}
+.back-btn{width:40px;height:40px;border-radius:50%;background:var(--card);border:1px solid var(--card-border);color:var(--text);font-size:20px;cursor:pointer}
+.field{margin-bottom:18px}
+.field label{display:block;font-size:14px;margin-bottom:8px}
+.field input,.field select{width:100%;padding:14px;background:var(--card);border:1px solid #34516f;border-radius:8px;color:var(--text);font-family:inherit;font-size:15px;outline:none}
+.field input:focus,.field select:focus{border-color:var(--gold)}
+.note{color:var(--muted);font-size:12px;line-height:1.5;margin-bottom:18px}
+.form-msg{margin-top:14px;text-align:center;font-size:13px;line-height:1.5;min-height:18px}
+.pic-edit{display:flex;flex-direction:column;align-items:center;gap:12px;margin-bottom:26px}
+.pic-edit .avatar{width:92px;height:92px;font-size:32px}
+.pic-actions{display:flex;gap:10px}
+.pic-actions button{background:var(--card);border:1px solid var(--card-border);color:var(--gold);font-family:inherit;font-size:13px;padding:9px 16px;border-radius:20px;cursor:pointer}
+.info-row{display:flex;justify-content:space-between;gap:16px;padding:15px 16px;border-bottom:1px solid var(--card-border);font-size:14px}
+.info-row:last-child{border-bottom:none}
+.info-row span:first-child{color:var(--muted);flex-shrink:0}
+.info-row span:last-child{text-align:right;word-break:break-all}
+
+.bottom-nav{position:fixed;left:50%;bottom:0;transform:translateX(-50%);width:100%;max-width:480px;height:calc(var(--nav-h) + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);background:rgba(10,31,61,.96);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid var(--card-border);display:grid;grid-template-columns:repeat(5,1fr);z-index:50}
+.nav-item{background:none;border:none;color:var(--muted);font-family:inherit;font-size:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer;position:relative;transition:color .2s}
+.nav-item svg{width:23px;height:23px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.nav-item.active{color:var(--gold);font-weight:bold}
+.nav-item.active::before{content:"";position:absolute;top:0;width:28px;height:3px;border-radius:0 0 4px 4px;background:var(--gold)}
+
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);opacity:0;pointer-events:none;transition:opacity .25s;z-index:60}
+.overlay.show{opacity:1;pointer-events:auto}
+.sheet{position:fixed;left:50%;bottom:0;transform:translate(-50%,100%);width:100%;max-width:480px;max-height:80vh;background:var(--bg-2);border:1px solid var(--card-border);border-radius:20px 20px 0 0;padding:20px 20px calc(20px + env(safe-area-inset-bottom));transition:transform .3s ease;z-index:70;display:flex;flex-direction:column}
+.sheet.show{transform:translate(-50%,0)}
+.sheet-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.sheet-head h3{font-size:18px}
+.link-btn{background:none;border:none;color:var(--gold);font-family:inherit;font-size:13px;cursor:pointer}
+.notif-list{overflow-y:auto;display:flex;flex-direction:column;gap:10px}
+.notif{background:var(--card);border:1px solid var(--card-border);border-radius:12px;padding:14px;display:flex;gap:12px}
+.notif.unread{border-color:var(--gold-deep)}
+.notif .icon{font-size:22px;line-height:1}
+.notif h4{font-size:14px;margin-bottom:4px}
+.notif p{color:var(--muted);font-size:13px;line-height:1.5}
+.notif small{display:block;margin-top:6px;color:#6f819c;font-size:11px}
+
+.toast{position:fixed;left:50%;bottom:calc(var(--nav-h) + 24px);transform:translate(-50%,20px);background:var(--card);border:1px solid var(--gold);color:var(--text);padding:12px 20px;border-radius:8px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;z-index:90;white-space:nowrap}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+#loader{position:fixed;inset:0;background:radial-gradient(circle at 50% 40%,#12305a 0%,var(--bg) 65%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:30px;z-index:200;transition:opacity .5s ease,visibility .5s ease}
+#loader.hide{opacity:0;visibility:hidden}
+.loader-ring{position:relative;width:110px;height:110px;display:flex;align-items:center;justify-content:center}
+.loader-ring::before,.loader-ring::after{content:"";position:absolute;inset:0;border-radius:50%;border:2px solid transparent}
+.loader-ring::before{border-top-color:var(--gold);border-right-color:var(--gold);animation:spin 1.1s linear infinite}
+.loader-ring::after{inset:10px;border-bottom-color:rgba(245,199,107,.5);border-left-color:rgba(245,199,107,.5);animation:spin 1.8s linear infinite reverse}
+.loader-mark{color:var(--gold);font-size:38px;font-weight:bold;animation:pulse 1.6s ease-in-out infinite}
+.loader-brand{text-align:center}
+.loader-brand h1{font-size:20px;letter-spacing:4px;background:linear-gradient(90deg,#b88a1a,#f5c76b,#fff2c4,#f5c76b,#b88a1a);background-size:200% auto;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:shine 2.2s linear infinite;margin-bottom:8px}
+.loader-brand p{color:var(--muted);font-size:12px;letter-spacing:1px}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(.88);opacity:.7}}
+@keyframes shine{to{background-position:200% center}}
+.ref-row{background:var(--card);border:1px solid var(--card-border);border-radius:12px;padding:14px;margin-bottom:10px}
+.ref-top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
+.ref-top b{font-size:14px;word-break:break-word}
+.ref-count{color:var(--gold);font-weight:bold;font-size:14px;white-space:nowrap}
+.ref-count.done{color:#70e6a0}
+.bar{height:8px;border-radius:4px;background:var(--bg);overflow:hidden}
+.bar span{display:block;height:100%;background:var(--gold);border-radius:4px;transition:width .3s}
+.bar.done span{background:#70e6a0}
+.ref-sub{color:var(--muted);font-size:12px;margin-top:8px}
+</style>
+</head>
+<body>
+
+<div id="loader">
+  <div class="loader-ring"><div class="loader-mark">〆</div></div>
+  <div class="loader-brand">
+    <h1>TREND WAVE</h1>
+    <p>Preparing your dashboard...</p>
+  </div>
+</div>
+
+<div class="app">
+
+  <div class="header">
+    <div class="logo">TREND WAVE 〆</div>
+    <div class="header-right">
+      <button class="icon-btn" id="bellBtn" aria-label="Notifications">
+        <svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+        <span class="badge" id="badge">0</span>
+      </button>
+      <div class="avatar" id="avatar">?</div>
+        <div id="blockedBanner" style="display:none;background:rgba(255,107,107,.12);border:1px solid #ff6b6b;color:#ffb4b4;border-radius:12px;padding:14px;font-size:13px;line-height:1.5;margin-bottom:18px">
+    Your account is restricted. You can't submit tasks or request withdrawals. Please contact support.
+        </div>
+    </div>
+  </div>
+
+  <!-- HOME -->
+  <section class="view active" id="view-home">
+    <a class="community" id="telegramLink" href="https://t.me/trendewave" target="_blank" rel="noopener noreferrer">
+      <div class="tg"><svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></div>
+      <div class="info">
+        <h3>Join Our Community</h3>
+        <p>Get updates and more info on our Telegram channel.</p>
+      </div>
+      <span class="join">Join</span>
+    </a>
+
+    <div class="welcome">
+      <h2 id="welcomeName">Welcome back!</h2>
+      <p id="userEmail"></p>
+    </div>
+
+    <div class="balance">
+      <p>Total Balance</p>
+      <h1 id="balance">₦0.00</h1>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><p>Total Referrals</p><h2 id="referrals">0</h2></div>
+      <div class="stat"><p>Tasks Completed</p><h2 id="tasksDone">0</h2></div>
+    </div>
+
+    <h3 class="section-title">Recent Activity</h3>
+    <div class="activity-list" id="activityList"></div>
+    <p class="activity-hint">Your earnings, completed tasks and referrals will show up here.</p>
+  </section>
+
+  <!-- TASKS -->
+  <section class="view" id="view-tasks">
+    <h2 class="page-title">Tasks</h2>
+    <p class="page-sub">Complete tasks to earn rewards.</p>
+    <div id="taskList"></div>
+
+    <div class="empty" id="tasksEmpty">
+      <span class="big">📋</span>
+      No tasks available right now.<br>
+      Check back soon. New tasks will show up here.
+    </div>
+  </section>
+
+  <!-- REFER -->
+  <section class="view" id="view-refer">
+    <h2 class="page-title">Refer Friends</h2>
+    <p class="page-sub">Share your personal link and invite friends to join Trend Wave.</p>
+    <div class="ref-box">
+      <label>Your referral link</label>
+      <div class="ref-link" id="refLink">Loading...</div>
+      <button class="btn" id="copyBtn">Copy Link</button>
+    </div>
+        <p class="note" id="refNote" style="margin-top:14px">Earn ₦100 for every friend who joins with your link and completes 5 tasks.</p>
+
+    <h3 class="section-title" style="margin-top:24px">Your referrals</h3>
+    <div id="refList"></div>
+    <div class="empty" id="refEmpty">
+      <span class="big">👥</span>
+      No referrals yet.<br>
+      Share your link to get started.
+    </div>
+  </section>
+
+  <!-- WALLET -->
+  <section class="view" id="view-wallet">
+    <h2 class="page-title">Wallet</h2>
+    <p class="page-sub">Your balance and transactions.</p>
+    <div class="balance">
+      <p>Available Balance</p>
+      <h1 id="walletBalance">₦0.00</h1>
+    </div>
+    <div class="wallet-actions">
+      <button class="btn" id="withdrawBtn">Withdraw</button>
+    </div>
+    <h3 class="section-title">Transactions</h3>
+    <div class="activity-list" id="walletTx"></div>
+    <div class="empty" id="walletTxEmpty">
+      <span class="big">💳</span>
+      No transactions yet.<br>
+      Your wallet activity will appear here.
+    </div>
+  </section>
+
+  <!-- PROFILE -->
+  <section class="view" id="view-profile">
+    <div class="profile-card">
+      <div class="avatar" id="avatarBig">?</div>
+      <h3 id="profileName">-</h3>
+      <p id="profileEmail">-</p>
+    </div>
+
+    <!-- ADMIN BUTTON (only shown to the admin account) -->
+    <div class="list" id="adminList">
+      <button class="row" id="adminRow">
+        <span class="r-icon">👑</span>
+        <span class="r-text"><b>Admin Panel</b><small>Manage users, tasks and withdrawals</small></span>
+        <span class="chev">›</span>
+      </button>
+    </div>
+
+    <p class="group-title">Settings</p>
+    <div class="list">
+      <button class="row" data-open="sub-edit">
+        <span class="r-icon">👤</span>
+        <span class="r-text"><b>Profile</b><small>Picture and display name</small></span>
+        <span class="chev">›</span>
+      </button>
+      <button class="row" data-open="sub-bank">
+        <span class="r-icon">💳</span>
+        <span class="r-text"><b>Wallet</b><small id="bankRowSub">Set your account number</small></span>
+        <span class="chev">›</span>
+      </button>
+      <button class="row" data-open="sub-security">
+        <span class="r-icon">🔒</span>
+        <span class="r-text"><b>Security</b><small>Change password</small></span>
+        <span class="chev">›</span>
+      </button>
+    </div>
+
+    <p class="group-title">More</p>
+    <div class="list">
+      <button class="row" data-open="sub-account">
+        <span class="r-icon">🪪</span>
+        <span class="r-text"><b>Account</b><small>Your account details</small></span>
+        <span class="chev">›</span>
+      </button>
+      <button class="row" data-open="sub-transactions">
+        <span class="r-icon">🧾</span>
+        <span class="r-text"><b>Transaction</b><small>Your transaction history</small></span>
+        <span class="chev">›</span>
+      </button>
+      <button class="row" id="notifRow">
+        <span class="r-icon">🔔</span>
+        <span class="r-text"><b>Notification</b><small>Updates and information</small></span>
+        <span class="chev">›</span>
+      </button>
+    </div>
+
+    <div class="logout-wrap">
+      <button class="btn danger" id="logoutBtn">Logout</button>
+    </div>
+  </section>
+
+</div>
+
+<nav class="bottom-nav">
+  <button class="nav-item active" data-tab="home">
+    <svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>
+    Home
+  </button>
+  <button class="nav-item" data-tab="tasks">
+    <svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="m8 12 3 3 5-6"/></svg>
+    Task
+    <span class="count" id="taskCount">0</span>
+  </button>
+  <button class="nav-item" data-tab="refer">
+    <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><path d="M17 8h5M19.5 5.5v5"/></svg>
+    Refer
+  </button>
+  <button class="nav-item" data-tab="wallet">
+    <svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M2 10h20"/><path d="M16 15h2"/></svg>
+    Wallet
+  </button>
+  <button class="nav-item" data-tab="profile">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>
+    Profile
+  </button>
+</nav>
+
+<!-- SUB PAGE: PROFILE -->
+<div class="subpage" id="sub-edit">
+  <div class="sub-head">
+    <button class="back-btn" data-back aria-label="Back">‹</button>
+    <h2>Profile</h2>
+  </div>
+  <div class="pic-edit">
+    <div class="avatar" id="editAvatar">?</div>
+    <div class="pic-actions">
+      <button type="button" id="pickPic">Change picture</button>
+      <button type="button" id="removePic">Remove</button>
+    </div>
+    <input type="file" id="picInput" accept="image/*" hidden>
+  </div>
+  <form id="editForm">
+    <div class="field">
+      <label for="editName">Display name</label>
+      <input type="text" id="editName" placeholder="Enter your name" maxlength="40">
+    </div>
+    <p class="note">Your picture is saved on this device for now.</p>
+    <button type="submit" class="btn" id="editSave">Save Changes</button>
+    <div class="form-msg" id="editMsg"></div>
+  </form>
+</div>
+
+<!-- SUB PAGE: WALLET -->
+<div class="subpage" id="sub-bank">
+  <div class="sub-head">
+    <button class="back-btn" data-back aria-label="Back">‹</button>
+    <h2>Wallet</h2>
+  </div>
+  <p class="page-sub">Set the account where you want to receive your withdrawals.</p>
+  <form id="bankForm">
+    <div class="field">
+      <label for="bankName">Bank</label>
+      <select id="bankName"></select>
+    </div>
+    <div class="field">
+      <label for="bankNumber">Account number</label>
+      <input type="text" id="bankNumber" inputmode="numeric" maxlength="10" placeholder="10-digit account number">
+    </div>
+    <div class="field">
+      <label for="bankHolder">Account name</label>
+      <input type="text" id="bankHolder" placeholder="Name on the account" maxlength="60">
+    </div>
+    <p class="note">Double-check your details before saving.</p>
+    <button type="submit" class="btn" id="bankSave">Save Account</button>
+    <div class="form-msg" id="bankMsg"></div>
+  </form>
+</div>
+
+<!-- SUB PAGE: SECURITY -->
+<div class="subpage" id="sub-security">
+  <div class="sub-head">
+    <button class="back-btn" data-back aria-label="Back">‹</button>
+    <h2>Security</h2>
+  </div>
+  <p class="page-sub">Change your password. You need your current password to confirm it's you.</p>
+  <form id="securityForm">
+    <div class="field">
+      <label for="curPass">Current password</label>
+      <input type="password" id="curPass" placeholder="Enter current password" autocomplete="current-password">
+    </div>
+    <div class="field">
+      <label for="newPass">New password</label>
+      <input type="password" id="newPass" placeholder="At least 8 characters" autocomplete="new-password">
+    </div>
+    <div class="field">
+      <label for="confPass">Confirm new password</label>
+      <input type="password" id="confPass" placeholder="Repeat new password" autocomplete="new-password">
+    </div>
+    <button type="submit" class="btn" id="secSave">Update Password</button>
+    <div class="form-msg" id="secMsg"></div>
+  </form>
+</div>
+
+<!-- SUB PAGE: ACCOUNT -->
+<div class="subpage" id="sub-account">
+  <div class="sub-head">
+    <button class="back-btn" data-back aria-label="Back">‹</button>
+    <h2>Account</h2>
+  </div>
+  <div class="list">
+    <div class="info-row"><span>Name</span><span id="accName">-</span></div>
+    <div class="info-row"><span>Email</span><span id="accEmail">-</span></div>
+    <div class="info-row"><span>Member since</span><span id="accSince">-</span></div>
+    <div class="info-row"><span>Account ID</span><span id="accId">-</span></div>
+  </div>
+</div>
+
+<!-- SUB PAGE: TRANSACTIONS -->
+<div class="subpage" id="sub-transactions">
+  <div class="sub-head">
+    <button class="back-btn" data-back aria-label="Back">‹</button>
+    <h2>Transaction</h2>
+  </div>
+  <div class="activity-list" id="subTx"></div>
+  <div class="empty" id="subTxEmpty">
+    <span class="big">🧾</span>
+    No transactions yet.<br>
+    Your earnings and withdrawals will appear here.
+  </div>
+</div>
+
+<!-- SUB PAGE: SUBMIT PROOF -->
+<div class="subpage" id="sub-proof">
+  <div class="sub-head">
+    <button class="back-btn" data-back aria-label="Back">‹</button>
+    <h2>Submit proof</h2>
+  </div>
+
+  <div class="proof-task">
+    <h3 id="proofTitle">-</h3>
+    <p id="proofReward">-</p>
+  </div>
+
+  <form id="proofForm">
+    <div class="field" id="proofImgField">
+      <label>Screenshot</label>
+      <button type="button" class="btn outline" id="proofPick">Choose screenshot</button>
+      <input type="file" id="proofFile" accept="image/*" hidden>
+      <img id="proofPreview" alt="Screenshot preview">
+    </div>
+
+    <div class="field" id="proofTextField">
+      <label for="proofText">Your username or details</label>
+      <input type="text" id="proofText" maxlength="120" placeholder="e.g. @yourname">
+    </div>
+
+    <p class="note" id="proofNone">No proof is needed for this task. Tap submit when you've done it.</p>
+    <p class="note">Submissions are reviewed by our team. Your reward is added once it's approved.</p>
+
+    <button type="submit" class="btn" id="proofSave">Submit for review</button>
+    <div class="form-msg" id="proofMsg"></div>
+  </form>
+</div>
+
+<div class="overlay" id="overlay"></div>
+<!-- SUB PAGE: WITHDRAW -->
+<div class="subpage" id="sub-withdraw">
+  <div class="sub-head">
+    <button class="back-btn" data-back aria-label="Back">‹</button>
+    <h2>Withdraw</h2>
+  </div>
+
+  <div class="wd-box">
+    <p>Available balance</p>
+    <h3 id="wdBalance">₦0.00</h3>
+  </div>
+
+  <div id="wdNoBank" style="display:none">
+    <p class="page-sub">Add the account where you want to receive your money first.</p>
+    <button type="button" class="btn" id="wdSetBank">Add payout account</button>
+  </div>
+
+  <form id="wdForm" style="display:none">
+    <div class="wd-box">
+      <p>Money will be sent to</p>
+      <div class="wd-bank" id="wdBank">-</div>
+    </div>
+
+    <div class="field">
+      <label for="wdAmount">Amount (₦)</label>
+      <input type="number" id="wdAmount" min="1" step="any" inputmode="decimal" placeholder="Enter amount">
+    </div>
+
+    <p class="note" id="wdNote"></p>
+
+    <button type="submit" class="btn" id="wdSave">Request withdrawal</button>
+    <div class="form-msg" id="wdMsg"></div>
+  </form>
+
+  <p class="group-title">Your requests</p>
+  <div class="activity-list" id="wdList"></div>
+  <p class="activity-hint" id="wdEmpty">No withdrawal requests yet.</p>
+</div>
+<div class="sheet" id="sheet">
+  <div class="sheet-head">
+    <h3>Notifications</h3>
+    <button class="link-btn" id="markRead">Mark all as read</button>
+  </div>
+  <div class="notif-list" id="notifList"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyB3iNjyk71CM0w0TwsI0T4EKlgku4oaUOE",
+  authDomain: "trend-wave-d5a7b.firebaseapp.com",
+  projectId: "trend-wave-d5a7b",
+  storageBucket: "trend-wave-d5a7b.firebasestorage.app",
+  messagingSenderId: "403305458793",
+  appId: "1:403305458793:web:9df8a535500c403ed0c6f8",
+  measurementId: "G-1ZX8YNF81Y"
+};
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+const ADMIN_UID = "DEKlRtipYTMIaBNkSzMtrGNNFXr2";
+
+const baseNotifications = [
+  { id: "welcome", icon: "🎉", title: "Welcome to Trend Wave", text: "Your account is ready. Explore the dashboard to get started.", time: "Just now" },
+  { id: "tasks", icon: "📋", title: "Tasks are coming", text: "New tasks will appear in the Task tab as soon as they are available.", time: "Today" },
+  { id: "refer", icon: "👥", title: "Invite your friends", text: "Open the Refer tab to get your personal invite link.", time: "Today" }
+];
+let notifications = baseNotifications.slice();
+// ---------- HELPERS ----------
+const $ = (id) => document.getElementById(id);
+
+function formatNaira(amount) {
+  return "₦" + Number(amount || 0).toLocaleString("en-NG", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function getInitials(text) {
+  const parts = text.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  if (parts.length === 1) return parts[0][0].toUpperCase();
+  return (parts[0][0] + parts[1][0]).toUpperCase();
+}
+
+let toastTimer;
+function showToast(text) {
+  const toast = $("toast");
+  toast.textContent = text;
+  toast.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove("show"), 2200);
+}
+
+function readStore(key, fallback) {
+  try {
+    const value = localStorage.getItem(key);
+    return value ? JSON.parse(value) : fallback;
+  } catch (e) { return fallback; }
+}
+
+function writeStore(key, value) {
+  try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) {}
+}
+
+// ---------- TABS ----------
+function switchTab(tab) {
+  document.querySelectorAll(".view").forEach((v) => v.classList.remove("active"));
+  document.querySelectorAll(".nav-item").forEach((n) => n.classList.remove("active"));
+  $("view-" + tab).classList.add("active");
+  document.querySelector('.nav-item[data-tab="' + tab + '"]').classList.add("active");
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+document.querySelectorAll(".nav-item").forEach((item) => {
+  item.addEventListener("click", () => switchTab(item.dataset.tab));
+});
+
+
+
+// ---------- RECENT ACTIVITY ----------
+let myTx = [];
+
+function renderActivity() {
+  if (!currentUser) return;
+
+  const list = $("activityList");
+  list.innerHTML = "";
+
+  const ms = (ts) => (ts && ts.toMillis ? ts.toMillis() : Date.now());
+  const items = [];
+
+  // Task rewards
+  myTx.forEach((t) => {
+        if (t.type === "task_reward" || t.type === "referral_bonus") {
+      items.push({
+        icon: "💰", title: t.title || "Task reward", note: "",
+        dateText: fmtTxDate(t.createdAt), amount: "+" + formatNaira(t.amount), cls: "", ms: ms(t.createdAt)
+      });
+    }
+  });
+
+  // Withdrawals
+  myWithdrawals.forEach((w) => {
+    const paid = w.status === "paid";
+    const rejected = w.status === "rejected";
+    const when = paid || rejected ? (w.reviewedAt || w.createdAt) : w.createdAt;
+    items.push({
+      icon: paid ? "✅" : rejected ? "❌" : "⏳",
+      title: paid ? "Withdrawal paid" : rejected ? "Withdrawal rejected" : "Withdrawal requested",
+      note: "", dateText: fmtTxDate(when), amount: formatNaira(w.amount),
+      cls: paid ? "" : rejected ? "bad" : "pending", ms: ms(when)
+    });
+  });
+
+  // Task proofs waiting or rejected (approved ones show as rewards above)
+  Object.keys(mySubs).forEach((id) => {
+    const sub = mySubs[id];
+    if (sub.status === "pending") {
+      items.push({
+        icon: "📤", title: sub.taskTitle || "Task", note: "Proof under review",
+        dateText: fmtTxDate(sub.createdAt), amount: formatNaira(sub.reward), cls: "pending", ms: ms(sub.createdAt)
+      });
+    } else if (sub.status === "rejected") {
+      const when = sub.reviewedAt || sub.createdAt;
+      items.push({
+        icon: "❌", title: sub.taskTitle || "Task", note: "Proof rejected",
+        dateText: fmtTxDate(when), amount: formatNaira(sub.reward), cls: "bad", ms: ms(when)
+      });
+    }
+  });
+
+  // Account created
+  if (currentUser.metadata && currentUser.metadata.creationTime) {
+    const created = new Date(currentUser.metadata.creationTime);
+    items.push({
+      icon: "🎉", title: "Account created", note: "",
+      dateText: created.toLocaleDateString("en-NG", { day: "numeric", month: "short", year: "numeric" }),
+      amount: "", cls: "", ms: created.getTime()
+    });
+  }
+
+  items.sort((a, b) => b.ms - a.ms);
+
+  items.slice(0, 5).forEach((a) => {
+    const row = document.createElement("div");
+    row.className = "activity";
+
+    const icon = document.createElement("div");
+    icon.className = "a-icon";
+    icon.textContent = a.icon;
+
+    const body = document.createElement("div");
+    body.className = "a-body";
+    const title = document.createElement("h4");
+    title.textContent = a.title;
+    const time = document.createElement("small");
+    time.textContent = a.dateText + (a.note ? " · " + a.note : "");
+    body.append(title, time);
+
+    row.append(icon, body);
+
+    if (a.amount) {
+      const amt = document.createElement("div");
+      amt.className = "amt " + a.cls;
+      amt.textContent = a.amount;
+      row.appendChild(amt);
+    }
+
+    list.appendChild(row);
+  });
+  }
+
+// ---------- NOTIFICATIONS ----------
+let readKey = "tw_read_notifs";
+const getRead = () => readStore(readKey, []);
+
+function renderNotifications() {
+  const read = getRead();
+  const list = $("notifList");
+  list.innerHTML = "";
+
+  notifications.forEach((n) => {
+    const item = document.createElement("div");
+    item.className = "notif" + (read.includes(n.id) ? "" : " unread");
+    const icon = document.createElement("div");
+    icon.className = "icon";
+    icon.textContent = n.icon;
+    const body = document.createElement("div");
+    const title = document.createElement("h4");
+    title.textContent = n.title;
+    const text = document.createElement("p");
+    text.textContent = n.text;
+    const time = document.createElement("small");
+    time.textContent = n.time;
+    body.append(title, text, time);
+    item.append(icon, body);
+    list.appendChild(item);
+  });
+
+  const unread = notifications.filter((n) => !read.includes(n.id)).length;
+  const badge = $("badge");
+  badge.textContent = unread;
+  badge.classList.toggle("show", unread > 0);
+}
+
+function openSheet() {
+  renderNotifications();
+  $("overlay").classList.add("show");
+  $("sheet").classList.add("show");
+}
+
+function closeSheet() {
+  $("overlay").classList.remove("show");
+  $("sheet").classList.remove("show");
+}
+
+$("bellBtn").addEventListener("click", openSheet);
+$("overlay").addEventListener("click", closeSheet);
+$("markRead").addEventListener("click", () => {
+  writeStore(readKey, notifications.map((n) => n.id));
+  renderNotifications();
+});
+
+// ---------- REFERRAL LINK ----------
+$("copyBtn").addEventListener("click", async () => {
+  const link = $("refLink").textContent;
+  try {
+    await navigator.clipboard.writeText(link);
+    showToast("Link copied!");
+  } catch (e) {
+    const temp = document.createElement("textarea");
+    temp.value = link;
+    document.body.appendChild(temp);
+    temp.select();
+    try { document.execCommand("copy"); showToast("Link copied!"); }
+    catch (err) { showToast("Could not copy. Copy it manually."); }
+    document.body.removeChild(temp);
+  }
+});
+
+// ---------- PROFILE ----------
+let currentUser = null;
+let userData = null;
+let unsubscribeUser = null;
+let pendingPic;
+
+const picKey = (uid) => "tw_pic_" + uid;
+
+const banks = [
+  "Access Bank", "Citibank", "Ecobank", "Fidelity Bank", "First Bank", "FCMB",
+  "GTBank", "Keystone Bank", "Kuda", "Moniepoint", "Opay", "PalmPay",
+  "Polaris Bank", "Providus Bank", "Stanbic IBTC", "Sterling Bank",
+  "UBA", "Union Bank", "Unity Bank", "Wema Bank", "Zenith Bank"
+];
+
+function setMsg(id, text, ok) {
+  const el = $(id);
+  el.style.color = ok ? "#70e6a0" : "#ff7777";
+  el.textContent = text;
+}
+
+function setAvatar(el, initials, pic) {
+  if (pic) {
+    el.style.backgroundImage = 'url("' + pic + '")';
+    el.classList.add("has-pic");
+    el.textContent = "";
+  } else {
+    el.style.backgroundImage = "";
+    el.classList.remove("has-pic");
+    el.textContent = initials;
+  }
+}
+
+function userName() {
+  return currentUser.displayName || currentUser.email.split("@")[0];
+}
+
+function refreshUserUI() {
+  if (!currentUser) return;
+
+  const name = userName();
+  const initials = getInitials(name);
+  const pic = readStore(picKey(currentUser.uid), null);
+
+  $("welcomeName").textContent = "Welcome back, " + name.split(" ")[0] + "!";
+  $("userEmail").textContent = currentUser.email;
+  $("profileName").textContent = name;
+  $("profileEmail").textContent = currentUser.email;
+
+  setAvatar($("avatar"), initials, pic);
+  setAvatar($("avatarBig"), initials, pic);
+
+  const bank = userData && userData.payout ? userData.payout : null;
+  $("bankRowSub").textContent = bank
+    ? bank.bank + " · ****" + bank.number.slice(-4)
+    : "Set your account number";
+}
+
+// ---------- SUB PAGES ----------
+function openSub(id) {
+  if (id === "sub-edit") prepareEdit();
+  if (id === "sub-bank") prepareBank();
+  if (id === "sub-security") prepareSecurity();
+  if (id === "sub-account") prepareAccount();
+  const page = $(id);
+  page.scrollTop = 0;
+  page.classList.add("show");
+}
+
+function closeSub() {
+  document.querySelectorAll(".subpage").forEach((s) => s.classList.remove("show"));
+}
+
+document.querySelectorAll("[data-open]").forEach((row) => {
+  row.addEventListener("click", () => openSub(row.dataset.open));
+});
+document.querySelectorAll("[data-back]").forEach((btn) => {
+  btn.addEventListener("click", closeSub);
+});
+$("notifRow").addEventListener("click", openSheet);
+
+// Admin button
+$("adminRow").addEventListener("click", () => {
+  location.href = "admin-dashboard.html";
+});
+
+// Profile edit
+function prepareEdit() {
+  pendingPic = undefined;
+  $("editName").value = currentUser.displayName || "";
+  $("editMsg").textContent = "";
+  setAvatar($("editAvatar"), getInitials(userName()), readStore(picKey(currentUser.uid), null));
+}
+
+$("pickPic").addEventListener("click", () => $("picInput").click());
+
+$("removePic").addEventListener("click", () => {
+  pendingPic = null;
+  setAvatar($("editAvatar"), getInitials($("editName").value || userName()), null);
+});
+
+$("picInput").addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  e.target.value = "";
+  if (!file) return;
+
+  if (!file.type.startsWith("image/")) {
+    showToast("Please choose an image.");
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    const img = new Image();
+    img.onload = () => {
+      const size = 256;
+      const canvas = document.createElement("canvas");
+      canvas.width = size;
+      canvas.height = size;
+      const side = Math.min(img.width, img.height);
+      const sx = (img.width - side) / 2;
+      const sy = (img.height - side) / 2;
+      canvas.getContext("2d").drawImage(img, sx, sy, side, side, 0, 0, size, size);
+      pendingPic = canvas.toDataURL("image/jpeg", 0.85);
+      setAvatar($("editAvatar"), "", pendingPic);
+    };
+    img.onerror = () => showToast("Could not read that image.");
+    img.src = reader.result;
+  };
+  reader.readAsDataURL(file);
+});
+
+$("editForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const name = $("editName").value.trim();
+  if (name.length < 2) {
+    setMsg("editMsg", "Please enter your display name.", false);
+    return;
+  }
+
+  const btn = $("editSave");
+  btn.disabled = true;
+  btn.textContent = "Saving...";
+
+  try {
+    if (name !== (currentUser.displayName || "")) {
+      await currentUser.updateProfile({ displayName: name });
+      try {
+        await db.collection("users").doc(currentUser.uid).set({ name }, { merge: true });
+      } catch (err) {}
+    }
+
+    if (pendingPic === null) {
+      try { localStorage.removeItem(picKey(currentUser.uid)); } catch (err) {}
+    } else if (typeof pendingPic === "string") {
+      writeStore(picKey(currentUser.uid), pendingPic);
+    }
+
+    refreshUserUI();
+    closeSub();
+    showToast("Profile updated");
+  } catch (err) {
+    setMsg("editMsg", err.message, false);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Save Changes";
+  }
+});
+
+// Wallet: account number
+function prepareBank() {
+  const select = $("bankName");
+
+  if (!select.options.length) {
+    const first = document.createElement("option");
+    first.value = "";
+    first.textContent = "Select your bank";
+    select.appendChild(first);
+    banks.forEach((b) => {
+      const opt = document.createElement("option");
+      opt.value = b;
+      opt.textContent = b;
+      select.appendChild(opt);
+    });
+  }
+
+  const saved = userData && userData.payout ? userData.payout : null;
+  select.value = saved ? saved.bank : "";
+  $("bankNumber").value = saved ? saved.number : "";
+  $("bankHolder").value = saved ? saved.holder : "";
+  $("bankMsg").textContent = "";
+}
+
+$("bankNumber").addEventListener("input", (e) => {
+  e.target.value = e.target.value.replace(/\D/g, "").slice(0, 10);
+});
+
+$("bankForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const bank = $("bankName").value;
+  const number = $("bankNumber").value.trim();
+  const holder = $("bankHolder").value.trim();
+
+  if (!bank) return setMsg("bankMsg", "Please select your bank.", false);
+  if (!/^\d{10}$/.test(number)) return setMsg("bankMsg", "Account number must be 10 digits.", false);
+  if (holder.length < 3) return setMsg("bankMsg", "Please enter the account name.", false);
+
+  const btn = $("bankSave");
+  btn.disabled = true;
+  btn.textContent = "Saving...";
+
+  try {
+    await db.collection("users").doc(currentUser.uid).set(
+      { payout: { bank, number, holder } },
+      { merge: true }
+    );
+    closeSub();
+    showToast("Account saved");
+  } catch (err) {
+    setMsg("bankMsg", "Could not save your account. Please try again.", false);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Save Account";
+  }
+});
+
+// Security: change password
+function prepareSecurity() {
+  $("securityForm").reset();
+  $("secMsg").textContent = "";
+}
+
+$("securityForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const cur = $("curPass").value;
+  const next = $("newPass").value;
+  const conf = $("confPass").value;
+
+  if (!cur) return setMsg("secMsg", "Enter your current password.", false);
+  if (next.length < 8) return setMsg("secMsg", "New password must be at least 8 characters.", false);
+  if (next !== conf) return setMsg("secMsg", "New passwords do not match.", false);
+  if (next === cur) return setMsg("secMsg", "New password must be different from the current one.", false);
+
+  const btn = $("secSave");
+  btn.disabled = true;
+  btn.textContent = "Updating...";
+  $("secMsg").textContent = "";
+
+  try {
+    const credential = firebase.auth.EmailAuthProvider.credential(currentUser.email, cur);
+    await currentUser.reauthenticateWithCredential(credential);
+    await currentUser.updatePassword(next);
+    $("securityForm").reset();
+    closeSub();
+    showToast("Password updated");
+  } catch (err) {
+    const errors = {
+      "auth/wrong-password": "Your current password is incorrect.",
+      "auth/invalid-credential": "Your current password is incorrect.",
+      "auth/weak-password": "That password is too weak.",
+      "auth/requires-recent-login": "Please log out and log in again, then retry.",
+      "auth/too-many-requests": "Too many attempts. Try again later.",
+      "auth/network-request-failed": "Check your internet connection."
+    };
+    setMsg("secMsg", errors[err.code] || err.message, false);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Update Password";
+  }
+});
+
+// Account details
+function prepareAccount() {
+  $("accName").textContent = userName();
+  $("accEmail").textContent = currentUser.email;
+  $("accId").textContent = currentUser.uid;
+  const created = currentUser.metadata && currentUser.metadata.creationTime;
+  $("accSince").textContent = created
+    ? new Date(created).toLocaleDateString("en-NG", { day: "numeric", month: "long", year: "numeric" })
+    : "-";
+}
+
+// ---------- FIRESTORE DATA ----------
+function renderStats() {
+  const d = userData || {};
+    $("blockedBanner").style.display = d.blocked ? "block" : "none";
+  $("balance").textContent = formatNaira(d.balance);
+  $("walletBalance").textContent = formatNaira(d.balance);
+    $("referrals").textContent = String(myReferrals.length);
+  $("tasksDone").textContent = String(d.tasksCompleted || 0);
+
+  const base = window.location.href.replace(/[^/]*$/, "");
+  $("refLink").textContent = currentUser ? base + "register.html?ref=" + currentUser.uid : "Loading...";
+}
+
+function startUserData(user) {
+  if (unsubscribeUser) unsubscribeUser();
+  const ref = db.collection("users").doc(user.uid);
+
+  unsubscribeUser = ref.onSnapshot(
+    async (snap) => {
+      if (!snap.exists) {
+        try {
+          await ref.set({
+            name: user.displayName || "",
+            email: user.email,
+            balance: 0,
+            referralCount: 0,
+            tasksCompleted: 0,
+            referralCode: user.uid,
+            referredBy: "",
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+        } catch (err) {
+          showToast("Could not set up your profile.");
+        }
+        return;
+      }
+      userData = snap.data();
+      renderStats();
+      refreshUserUI();
+     registerReferral(user);
+    },
+    () => showToast("Could not load your data. Check your connection.")
+  );
+}
+
+// ---------- TASKS ----------
+const CATEGORIES = {
+  social: { icon: "📱", label: "Social media" },
+  video: { icon: "🎬", label: "Watch video" },
+  app: { icon: "📲", label: "Install app" },
+  survey: { icon: "📝", label: "Survey" },
+  other: { icon: "⭐", label: "Other" }
+};
+
+let unsubscribeTasks = null;
+
+let lastTasks = [];
+let mySubs = {};          // taskId -> submission
+let unsubscribeSubs = null;
+let unsubscribeTx = null;
+let proofTask = null;
+let proofImg = null;
+
+function renderTasks(tasks) {
+  if (tasks) lastTasks = tasks;
+  const list = $("taskList");
+  list.innerHTML = "";
+
+  $("tasksEmpty").style.display = lastTasks.length ? "none" : "block";
+
+  const available = lastTasks.filter((t) => {
+    const sub = mySubs[t.id];
+    return !sub || sub.status === "rejected";
+  }).length;
+  const count = $("taskCount");
+  count.textContent = available;
+  count.classList.toggle("show", available > 0);
+
+  lastTasks.forEach((t) => {
+    const cat = CATEGORIES[t.category] || CATEGORIES.other;
+    const sub = mySubs[t.id];
+
+    const card = document.createElement("div");
+    card.className = "task";
+
+    const top = document.createElement("div");
+    top.className = "task-top";
+
+    const icon = document.createElement("div");
+    icon.className = "t-icon";
+    icon.textContent = cat.icon;
+
+    const main = document.createElement("div");
+    main.className = "t-main";
+    const title = document.createElement("h4");
+    title.textContent = t.title || "Untitled task";
+    const label = document.createElement("div");
+    label.className = "t-cat";
+    label.textContent = cat.label;
+    main.append(title, label);
+
+    const reward = document.createElement("div");
+    reward.className = "t-reward";
+    reward.textContent = formatNaira(t.reward);
+
+    top.append(icon, main, reward);
+    card.appendChild(top);
+
+    if (t.instructions) {
+      const text = document.createElement("div");
+      text.className = "t-text";
+      text.textContent = t.instructions;
+      card.appendChild(text);
+    }
+
+    if (sub && sub.status === "rejected") {
+      const note = document.createElement("div");
+      note.className = "t-note";
+      note.textContent = "Rejected" + (sub.reviewNote ? ": " + sub.reviewNote : "") + ". You can submit again.";
+      card.appendChild(note);
+    }
+
+    const actions = document.createElement("div");
+    actions.className = "task-actions";
+
+    const done = sub && (sub.status === "pending" || sub.status === "approved");
+
+    if (!done && t.link && /^https?:\/\//i.test(t.link)) {
+      const open = document.createElement("a");
+      open.className = "btn outline";
+      open.href = t.link;
+      open.target = "_blank";
+      open.rel = "noopener noreferrer";
+      open.textContent = "Start task";
+      actions.appendChild(open);
+    }
+
+    const action = document.createElement("button");
+    action.type = "button";
+    if (sub && sub.status === "pending") {
+      action.className = "btn muted";
+      action.textContent = "Under review";
+      action.disabled = true;
+    } else if (sub && sub.status === "approved") {
+      action.className = "btn ok";
+      action.textContent = "Completed ✓";
+      action.disabled = true;
+    } else {
+      action.className = "btn";
+      action.textContent = "Submit proof";
+      action.addEventListener("click", () => openProof(t));
+    }
+    actions.appendChild(action);
+
+    card.appendChild(actions);
+    list.appendChild(card);
+  });
+}
+
+function startTasks() {
+  if (unsubscribeTasks) unsubscribeTasks();
+
+  unsubscribeTasks = db.collection("tasks")
+    .where("status", "==", "active")
+    .onSnapshot(
+      (snap) => {
+        const tasks = snap.docs.map((d) => Object.assign({ id: d.id }, d.data()));
+        const time = (t) => (t.createdAt && t.createdAt.toMillis ? t.createdAt.toMillis() : Date.now());
+        tasks.sort((a, b) => time(b) - time(a));
+        renderTasks(tasks);
+      },
+      () => showToast("Could not load tasks. Check your connection.")
+    );
+}
+
+// My submissions (so each task shows its status)
+function startSubs(user) {
+  if (unsubscribeSubs) unsubscribeSubs();
+  mySubs = {};
+
+  unsubscribeSubs = db.collection("submissions")
+    .where("userId", "==", user.uid)
+    .onSnapshot(
+      (snap) => {
+        mySubs = {};
+        snap.docs.forEach((d) => {
+          const data = d.data();
+          mySubs[data.taskId] = data;
+        });
+        renderTasks();
+       renderActivity();
+      },
+      () => {}
+    );
+}
+
+// ---------- SUBMIT PROOF ----------
+function openProof(t) {
+  proofTask = t;
+  proofImg = null;
+  const type = t.proof || "screenshot";
+
+  $("proofTitle").textContent = t.title || "Task";
+  $("proofReward").textContent = "Reward: " + formatNaira(t.reward);
+  $("proofImgField").style.display = type === "screenshot" ? "block" : "none";
+  $("proofTextField").style.display = type === "username" ? "block" : "none";
+  $("proofNone").style.display = type === "none" ? "block" : "none";
+  $("proofText").value = "";
+  $("proofPreview").style.display = "none";
+  $("proofPick").textContent = "Choose screenshot";
+  $("proofMsg").textContent = "";
+
+  openSub("sub-proof");
+}
+
+$("proofPick").addEventListener("click", () => $("proofFile").click());
+
+$("proofFile").addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  e.target.value = "";
+  if (!file) return;
+
+  if (!file.type.startsWith("image/")) {
+    showToast("Please choose an image.");
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    const img = new Image();
+    img.onload = () => {
+      const max = 900;
+      const ratio = Math.min(1, max / Math.max(img.width, img.height));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(img.width * ratio);
+      canvas.height = Math.round(img.height * ratio);
+      canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+
+      proofImg = canvas.toDataURL("image/jpeg", 0.7);
+      $("proofPreview").src = proofImg;
+      $("proofPreview").style.display = "block";
+      $("proofPick").textContent = "Change screenshot";
+    };
+    img.onerror = () => showToast("Could not read that image.");
+    img.src = reader.result;
+  };
+  reader.readAsDataURL(file);
+});
+
+$("proofForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  if (!proofTask) return;
+
+  const type = proofTask.proof || "screenshot";
+  const text = $("proofText").value.trim();
+
+  if (type === "screenshot" && !proofImg) return setMsg("proofMsg", "Please add your screenshot.", false);
+  if (type === "username" && text.length < 2) return setMsg("proofMsg", "Please enter your username or details.", false);
+
+  const btn = $("proofSave");
+  btn.disabled = true;
+  btn.textContent = "Submitting...";
+  $("proofMsg").textContent = "";
+
+  try {
+    await db.collection("submissions").doc(currentUser.uid + "_" + proofTask.id).set({
+      userId: currentUser.uid,
+      userEmail: currentUser.email,
+      userName: userName(),
+      taskId: proofTask.id,
+      taskTitle: proofTask.title || "",
+      reward: Number(proofTask.reward),
+      proofType: type,
+      proofText: type === "username" ? text : "",
+      proofImage: type === "screenshot" ? proofImg : "",
+      status: "pending",
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    closeSub();
+    showToast("Submitted for review");
+  } catch (err) {
+    console.error(err);
+    setMsg(
+      "proofMsg",
+      err.code === "permission-denied"
+        ? "You can't submit this task. It may be unavailable or already submitted."
+        : "Could not submit. Please try again.",
+      false
+    );
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Submit for review";
+  }
+});
+
+// ---------- TRANSACTIONS ----------
+function fmtTxDate(ts) {
+  if (!ts || !ts.toDate) return "Just now";
+  return ts.toDate().toLocaleDateString("en-NG", { day: "numeric", month: "short", year: "numeric" });
+}
+
+function renderTx(listId, emptyId, items) {
+  const list = $(listId);
+  list.innerHTML = "";
+  $(emptyId).style.display = items.length ? "none" : "block";
+
+  items.forEach((t) => {
+        const negative = t.type === "withdrawal" || t.type === "deduction";
+    const row = document.createElement("div");
+    row.className = "activity";
+
+    const icon = document.createElement("div");
+    icon.className = "a-icon";
+    icon.textContent = negative ? "💸" : "💰";
+
+    const body = document.createElement("div");
+    body.className = "a-body";
+    const title = document.createElement("h4");
+    title.textContent = t.title || "Transaction";
+    const time = document.createElement("small");
+    time.textContent = fmtTxDate(t.createdAt);
+    body.append(title, time);
+
+    const amt = document.createElement("div");
+    amt.className = "amt" + (negative ? " neg" : "");
+    amt.textContent = (negative ? "-" : "+") + formatNaira(t.amount);
+
+    row.append(icon, body, amt);
+    list.appendChild(row);
+  });
+}
+
+function startTx(user) {
+  if (unsubscribeTx) unsubscribeTx();
+
+  unsubscribeTx = db.collection("transactions")
+    .where("userId", "==", user.uid)
+    .onSnapshot(
+      (snap) => {
+        const items = snap.docs.map((d) => d.data());
+        const time = (t) => (t.createdAt && t.createdAt.toMillis ? t.createdAt.toMillis() : Date.now());
+        items.sort((a, b) => time(b) - time(a));
+         myTx = items;
+        renderActivity();
+        renderTx("walletTx", "walletTxEmpty", items);
+        renderTx("subTx", "subTxEmpty", items);
+      },
+      () => {}
+    );
+}
+
+  // ---------- REFERRALS ----------
+let REFERRAL_TASKS = 5;
+let REFERRAL_BONUS = 100;
+let myReferrals = [];
+let unsubscribeRefs = null;
+let refTried = false;
+
+function renderReferrals() {
+  const list = $("refList");
+  list.innerHTML = "";
+  $("refEmpty").style.display = myReferrals.length ? "none" : "block";
+  $("referrals").textContent = String(myReferrals.length);
+
+  myReferrals.forEach((r) => {
+    const done = r.rewarded === true;
+    const count = Math.min(Number(r.tasksDone) || 0, REFERRAL_TASKS);
+
+    const row = document.createElement("div");
+    row.className = "ref-row";
+
+    const top = document.createElement("div");
+    top.className = "ref-top";
+    const name = document.createElement("b");
+    name.textContent = r.name || "New user";
+    const num = document.createElement("span");
+    num.className = "ref-count" + (done ? " done" : "");
+    num.textContent = (done ? REFERRAL_TASKS : count) + "/" + REFERRAL_TASKS;
+    top.append(name, num);
+
+    const bar = document.createElement("div");
+    bar.className = "bar" + (done ? " done" : "");
+    const fill = document.createElement("span");
+    fill.style.width = ((done ? REFERRAL_TASKS : count) / REFERRAL_TASKS * 100) + "%";
+    bar.appendChild(fill);
+
+    const sub = document.createElement("div");
+    sub.className = "ref-sub";
+    sub.textContent = done
+      ? "Reward earned: " + formatNaira(REFERRAL_BONUS) + " ✓"
+      : "Complete " + REFERRAL_TASKS + " tasks to earn you " + formatNaira(REFERRAL_BONUS);
+
+    row.append(top, bar, sub);
+    list.appendChild(row);
+  });
+}
+
+function startReferrals(user) {
+  if (unsubscribeRefs) unsubscribeRefs();
+
+  unsubscribeRefs = db.collection("referrals")
+    .where("referrerId", "==", user.uid)
+    .onSnapshot(
+      (snap) => {
+        myReferrals = snap.docs.map((d) => d.data());
+        const time = (r) => (r.createdAt && r.createdAt.toMillis ? r.createdAt.toMillis() : Date.now());
+        myReferrals.sort((a, b) => time(b) - time(a));
+        renderReferrals();
+      },
+      () => {}
+    );
+}
+
+// If I joined with someone's link, tell them (runs once per account)
+async function registerReferral(user) {
+  if (refTried) return;
+  const referrerId = userData && userData.referredBy;
+  if (!referrerId || referrerId === user.uid) return;
+  refTried = true;
+
+  const key = "tw_ref_sent_" + user.uid;
+  if (readStore(key, false)) return;
+
+  try {
+    const stamp = firebase.firestore.FieldValue.serverTimestamp();
+    const batch = db.batch();
+
+    batch.set(db.collection("referrals").doc(user.uid), {
+      referrerId: referrerId,
+      name: userName().split(" ")[0],
+      tasksDone: 0,
+      rewarded: false,
+      createdAt: stamp
+    });
+
+    batch.set(db.collection("notifications").doc("ref_" + user.uid), {
+      userId: referrerId,
+      icon: "👥",
+      title: "New referral",
+            text: "Someone used your link. Once they complete " + REFERRAL_TASKS + " tasks, you receive ₦" + REFERRAL_BONUS.toLocaleString("en-NG") + ".",
+      createdAt: stamp
+    });
+
+    await batch.commit();
+    writeStore(key, true);
+  } catch (err) {
+    if (err.code === "permission-denied") writeStore(key, true);
+  }
+}
+
+  // ---------- APP SETTINGS ----------
+let unsubscribeSettings = null;
+
+function renderReferralNote() {
+  $("refNote").textContent = "Earn ₦" + REFERRAL_BONUS.toLocaleString("en-NG") + " for every friend who joins with your link and completes " + REFERRAL_TASKS + " tasks.";
+}
+
+function startSettings() {
+  if (unsubscribeSettings) unsubscribeSettings();
+
+  unsubscribeSettings = db.collection("settings").doc("app").onSnapshot(
+    (snap) => {
+      const s = snap.exists ? snap.data() : {};
+      MIN_WITHDRAW = Number(s.minWithdraw) || 1000;
+      MAX_WITHDRAW = Number(s.maxWithdraw) || 5000;
+      REFERRAL_BONUS = s.referralBonus === 0 ? 0 : (Number(s.referralBonus) || 100);
+      REFERRAL_TASKS = Number(s.referralTasks) || 5;
+
+      if (s.telegramLink && /^https?:\/\//i.test(s.telegramLink)) {
+        $("telegramLink").href = s.telegramLink;
+      }
+
+      renderReferralNote();
+      renderReferrals();
+    },
+    () => {}
+  );
+}
+
+// ---------- AUTH GUARD ----------
+auth.onAuthStateChanged((user) => {
+  if (!user) {
+    window.location.replace("login.html");
+    return;
+  }
+
+  currentUser = user;
+  readKey = "tw_read_notifs_" + user.uid;
+
+  // Show the admin button only for the admin account
+  $("adminList").style.display = user.uid === ADMIN_UID ? "block" : "none";
+
+  refreshUserUI();
+  userData = null;
+  renderStats();
+  startUserData(user);
+  renderActivity(user);
+  renderNotifications();
+  startTasks();
+  startSubs(user);
+  startTx(user);
+  startWithdrawals(user);
+  startNotifications(user);
+  startReferrals(user);
+  startSettings();
+  setTimeout(() => $("loader").classList.add("hide"), 900);
+});
+
+  // ---------- LIVE NOTIFICATIONS ----------
+let unsubscribeNotifs = null;
+
+function startNotifications(user) {
+  if (unsubscribeNotifs) unsubscribeNotifs();
+
+  unsubscribeNotifs = db.collection("notifications")
+    .where("userId", "==", user.uid)
+    .onSnapshot(
+      (snap) => {
+        const live = snap.docs.map((d) => {
+          const n = d.data();
+          return {
+            id: d.id,
+            icon: n.icon || "🔔",
+            title: n.title || "Notification",
+            text: n.text || "",
+            time: fmtTxDate(n.createdAt),
+            ms: n.createdAt && n.createdAt.toMillis ? n.createdAt.toMillis() : Date.now()
+          };
+        });
+        live.sort((a, b) => b.ms - a.ms);
+        notifications = live.concat(baseNotifications);
+        renderNotifications();
+      },
+      () => {}
+    );
+}
+
+  // ---------- WITHDRAWALS ----------
+let MIN_WITHDRAW = 1000;
+let MAX_WITHDRAW = 5000;
+let myWithdrawals = [];
+let unsubscribeWd = null;
+
+function renderWithdrawals() {
+  const list = $("wdList");
+  list.innerHTML = "";
+  $("wdEmpty").style.display = myWithdrawals.length ? "none" : "block";
+
+  myWithdrawals.forEach((w) => {
+    const row = document.createElement("div");
+    row.className = "activity";
+
+    const icon = document.createElement("div");
+    icon.className = "a-icon";
+    icon.textContent = w.status === "paid" ? "✅" : w.status === "rejected" ? "❌" : "⏳";
+
+    const body = document.createElement("div");
+    body.className = "a-body";
+    const title = document.createElement("h4");
+    title.textContent = w.status === "paid" ? "Paid" : w.status === "rejected" ? "Rejected" : "Pending review";
+    const time = document.createElement("small");
+    time.textContent = fmtTxDate(w.createdAt) + (w.status === "rejected" && w.reviewNote ? " · " + w.reviewNote : "");
+    body.append(title, time);
+
+    const amt = document.createElement("div");
+    amt.className = "amt " + (w.status === "paid" ? "" : w.status === "rejected" ? "bad" : "pending");
+    amt.textContent = formatNaira(w.amount);
+
+    row.append(icon, body, amt);
+    list.appendChild(row);
+  });
+}
+
+function startWithdrawals(user) {
+  if (unsubscribeWd) unsubscribeWd();
+
+  unsubscribeWd = db.collection("withdrawals")
+    .where("userId", "==", user.uid)
+    .onSnapshot(
+      (snap) => {
+        myWithdrawals = snap.docs.map((d) => d.data());
+        const time = (w) => (w.createdAt && w.createdAt.toMillis ? w.createdAt.toMillis() : Date.now());
+        myWithdrawals.sort((a, b) => time(b) - time(a));
+        renderWithdrawals();
+        renderActivity();
+      },
+      () => {}
+    );
+}
+
+function openWithdraw() {
+  const payout = userData && userData.payout ? userData.payout : null;
+  const hasPending = myWithdrawals.some((w) => w.status === "pending");
+
+  $("wdBalance").textContent = formatNaira(userData && userData.balance);
+  $("wdNoBank").style.display = payout ? "none" : "block";
+  $("wdForm").style.display = payout ? "block" : "none";
+  $("wdMsg").textContent = "";
+  $("wdAmount").value = "";
+  $("wdNote").textContent = hasPending
+    ? "You have a request waiting for review. You can send another one after it's handled."
+        : "Minimum " + formatNaira(MIN_WITHDRAW) + " · Maximum " + formatNaira(MAX_WITHDRAW) + " per withdrawal.";
+
+  if (payout) {
+    $("wdBank").textContent = payout.holder + " · " + payout.bank + " · " + payout.number;
+  }
+
+  renderWithdrawals();
+  openSub("sub-withdraw");
+}
+
+$("withdrawBtn").addEventListener("click", openWithdraw);
+
+$("wdSetBank").addEventListener("click", () => {
+  closeSub();
+  openSub("sub-bank");
+});
+
+$("wdForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const payout = userData && userData.payout ? userData.payout : null;
+  const balance = Number(userData && userData.balance) || 0;
+  const amount = parseFloat($("wdAmount").value);
+
+  if (!payout) return setMsg("wdMsg", "Add your payout account first.", false);
+  if (!(amount > 0)) return setMsg("wdMsg", "Enter an amount.", false);
+  if (amount < MIN_WITHDRAW) return setMsg("wdMsg", "Minimum withdrawal is " + formatNaira(MIN_WITHDRAW) + ".", false);
+    if (amount > MAX_WITHDRAW) return setMsg("wdMsg", "Maximum withdrawal is " + formatNaira(MAX_WITHDRAW) + " at a time.", false);
+  if (amount > balance) return setMsg("wdMsg", "That's more than your available balance.", false);
+  if (myWithdrawals.some((w) => w.status === "pending")) return setMsg("wdMsg", "You already have a request waiting for review.", false);
+
+  const btn = $("wdSave");
+  btn.disabled = true;
+  btn.textContent = "Sending...";
+  $("wdMsg").textContent = "";
+
+  try {
+    await db.collection("withdrawals").add({
+      userId: currentUser.uid,
+      userEmail: currentUser.email,
+      userName: userName(),
+      amount: amount,
+      bank: payout.bank,
+      accountNumber: payout.number,
+      accountName: payout.holder,
+      status: "pending",
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    closeSub();
+    showToast("Withdrawal requested");
+  } catch (err) {
+    console.error(err);
+    setMsg("wdMsg", "Could not send your request. Please try again.", false);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Request withdrawal";
+  }
+});
+
+// ---------- LOGOUT ----------
+$("logoutBtn").addEventListener("click", async () => {
+  const button = $("logoutBtn");
+  button.disabled = true;
+  button.textContent = "Logging out...";
+
+  try {
+    await auth.signOut();
+    window.location.replace("login.html");
+  } catch (error) {
+    button.disabled = false;
+    button.textContent = "Logout";
+    showToast("Could not log out. Try again.");
+  }
+});
+</script>
+</body>
+</html>
